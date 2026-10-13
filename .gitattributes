@@ -1,0 +1,8 @@
+# Same line endings on Mac and Windows; binary assets are never touched.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.wav binary
+*.ogg binary
+*.ttf binary
+*.otf binary

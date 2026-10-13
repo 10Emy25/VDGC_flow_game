@@ -1,4 +1,45 @@
-# Mina: Scream — R2
+# Mina: Scream
+
+用声音控制奔跑的恐怖小游戏（Godot 4.7，主题 flow state）。
+
+## 团队快速开始
+
+1. 安装 **Godot 4.7.2**（标准版，不要选 .NET 版）：https://godotengine.org/download
+2. 用 GitHub Desktop 克隆本仓库，打开 Godot，点 **Import**，选仓库里的 `project.godot`。
+3. 等右下角导入完成，按 **F5** 运行。第一次运行时 Mac 会询问麦克风权限，点允许。
+
+**操作**：对着麦克风发声，越大声跑得越快。按 **K** 切换键盘模式：Shift 是哼歌，Ctrl 是说话，Space 是尖叫。
+
+**测试者模式**（只在编辑器里按 F5 时生效）：
+
+| 按键 | 作用 |
+| --- | --- |
+| 1–5 | 跳到 S1–S5 |
+| 6 | 下一个存档点 |
+| 7 | 无敌开/关 |
+| 8 | 跳过儿歌 |
+| 0 | 隐藏提示条 |
+
+删除 `scripts/dev/` 文件夹即可整个移除测试者模式。
+
+## 谁改哪里（避免冲突）
+
+| 想改的东西 | 改这里 | 要动代码吗 |
+| --- | --- | --- |
+| 美术 | 把同名 PNG 放进 `art/`，尺寸随意。所有 key 见 `ART_MANIFEST.md` | 不用 |
+| 音效、音乐 | 把同名 WAV 放进 `audio/` | 不用 |
+| 文字、对白 | `data/dialogue.json` | 不用 |
+| 数值（怪物速度、跳跃门槛等） | `data/balance.json` | 不用 |
+| 关卡布局（障碍、眼睛、存档点位置） | `data/level.json` | 不用 |
+| 儿歌歌词 | `data/song.json` | 不用 |
+
+**规则**：开始干活前先 **Pull**；改完马上 **Commit + Push**，提交说明写清楚改了什么；同一个 `.json` 或 `.tscn` 文件不要两个人同时改。
+
+设计和改动记录见 `NOTES.md`。最初的完整需求见 `SCREAM_SPEC.md`，其中一部分已被 `NOTES.md` 里的 R2.5 之后的改动取代。
+
+---
+
+## 开发说明（R1/R2 原文）
 
 A Godot 4.4+ / GDScript / Compatibility project. R1’s warning, clinic, voice input, and flower path now lead into the full S2–S5 level, both monsters, hiding, checkpoints/respawn, speed gates, beat surges, clinic ending, and End of Chapter/Restart. Face slam, scripted scares, the world art switch, layered music, F1 debug tools, flow meter, and scream budget remain R3 work.
 
