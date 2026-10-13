@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="440" viewBox="0 0 1920 440"><defs>
+      <linearGradient id="sand" x2="0.2" y2="1"><stop stop-color="#e8d8ae"/><stop offset="1" stop-color="#baa57b"/></linearGradient>
+      <linearGradient id="wood" x2="0.8" y2="1"><stop stop-color="#a98561"/><stop offset="1" stop-color="#665343"/></linearGradient>
+      <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#c2dddf"/><stop offset="1" stop-color="#fff2db"/></linearGradient>
+      <pattern id="hatch" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M-3 12L12-3M3 15L15 3" stroke="#172322" opacity=".2" stroke-width="1"/></pattern>
+      <pattern id="grain" width="17" height="19" patternUnits="userSpaceOnUse"><circle cx="3" cy="5" r="1" fill="#51472e" opacity=".16"/><circle cx="12" cy="14" r=".8" fill="#fff5d7" opacity=".65"/></pattern>
+    </defs><path d="M0 0H1920V92L1690 118L1610 239L1455 163L1388 273L1171 196L960 377L761 202L550 281L423 156L277 229L202 102L0 121Z" fill="#1a2018"/><path d="M32 110L210 123L281 252L418 186L551 310L771 233L962 407L1180 220L1388 297L1450 190L1618 267L1701 144L1900 115" fill="none" stroke="#c1c7a6" stroke-width="5"/><path d="M112 90L820 158M1038 108L1840 62" stroke="#6e775a" stroke-width="3"/></svg>

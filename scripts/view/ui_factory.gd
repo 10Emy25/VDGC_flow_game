@@ -48,9 +48,9 @@ static func button(parent: Node, key: String, rect: Rect2, action: Callable) -> 
 	node.text = GameState.text(key)
 	node.position = rect.position
 	node.size = rect.size
-	node.pressed.connect(action)
 	# Space belongs to voice input after a pointer click, so buttons release focus.
 	node.pressed.connect(node.release_focus)
+	node.pressed.connect(action)
 	parent.add_child(node)
 	return node
 

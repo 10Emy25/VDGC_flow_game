@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="420" height="520" viewBox="0 0 420 520"><defs>
+      <linearGradient id="sand" x2="0.2" y2="1"><stop stop-color="#e8d8ae"/><stop offset="1" stop-color="#baa57b"/></linearGradient>
+      <linearGradient id="wood" x2="0.8" y2="1"><stop stop-color="#a98561"/><stop offset="1" stop-color="#665343"/></linearGradient>
+      <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#c2dddf"/><stop offset="1" stop-color="#fff2db"/></linearGradient>
+      <pattern id="hatch" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M-3 12L12-3M3 15L15 3" stroke="#172322" opacity=".2" stroke-width="1"/></pattern>
+      <pattern id="grain" width="17" height="19" patternUnits="userSpaceOnUse"><circle cx="3" cy="5" r="1" fill="#51472e" opacity=".16"/><circle cx="12" cy="14" r=".8" fill="#fff5d7" opacity=".65"/></pattern>
+    </defs><g stroke="#20251e" stroke-width="9" stroke-linejoin="round"><path d="M54 201L75 504H106L124 217M288 207L303 504H342L357 207" fill="#777960"/><path d="M26 167L346 107L403 184L72 263Z" fill="#777960"/><path d="M72 263L403 184V217L76 296Z" fill="#575d47"/><path d="M58 172L327 129L375 178L85 239Z" fill="#a2a488" stroke-width="4"/><path d="M149 158L227 149M95 215L271 178M128 216L307 177" fill="none" stroke-width="2" opacity=".45"/></g><path d="M60 188L350 136M84 263L354 204" stroke="#f5edcf" stroke-width="3" opacity=".35"/></svg>

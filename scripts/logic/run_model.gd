@@ -12,6 +12,24 @@ var scare_age := INF
 var was_shouting := false
 var acceleration_rate := 0.0
 var previous_target := 0.0
+var gate_state := ""
+var gate_left := 0.0
+var gate_x := 0.0
+var jump_progress := 0.0
+
+func enter_gate(edge: float) -> String:
+	gate_x = edge
+	x = edge
+	if speed >= balance.speed_gate.min_speed:
+		gate_state = "jumping"
+		gate_left = balance.speed_gate.jump_s
+		jump_progress = 0.0
+	else:
+		gate_state = "stumbling"
+		gate_left = balance.speed_gate.stumble_s
+		speed = 0.0
+		acceleration_rate = 0.0
+	return gate_state
 
 func _init(config: Dictionary) -> void:
 	balance = config
@@ -20,6 +38,7 @@ func scripted_scare() -> void:
 	scare_age = 0.0
 
 func step(delta: float, target: float, shouting: bool) -> void:
+	var old_x := x
 	if shouting:
 		shouting_s += delta
 		quiet_s = 0.0
@@ -51,3 +70,40 @@ func step(delta: float, target: float, shouting: bool) -> void:
 		speed = target + (speed - target) * pow(0.5, delta / balance.decel_half_life_s)
 	previous_target = target
 	x += (old_speed + speed) * 0.5 * delta
+	if not gate_state.is_empty():
+		gate_left = maxf(0.0, gate_left - delta)
+		match gate_state:
+			"jumping":
+				jump_progress = 1.0 - gate_left / balance.speed_gate.jump_s
+				if gate_left <= 0.0:
+					x = maxf(x, gate_x + balance.speed_gate.width_m)
+					gate_state = ""
+			"stumbling":
+				x = old_x
+				speed = 0.0
+				acceleration_rate = 0.0
+				if gate_left <= 0.0:
+					gate_state = "climbing"
+					gate_left = balance.speed_gate.climb_s
+			"climbing":
+				x = lerpf(gate_x, gate_x + balance.speed_gate.width_m, 1.0 - gate_left / balance.speed_gate.climb_s)
+				speed = balance.speed_gate.width_m / balance.speed_gate.climb_s
+				if gate_left <= 0.0:
+					gate_state = ""
+					speed = 0.0
+					acceleration_rate = 0.0
+
+func reset_position(value: float) -> void:
+	x = value
+	speed = 0.0
+	shouting_s = 0.0
+	quiet_s = 0.0
+	guarded = false
+	bonus_left = 0.0
+	scare_age = INF
+	was_shouting = false
+	acceleration_rate = 0.0
+	previous_target = 0.0
+	gate_state = ""
+	gate_left = 0.0
+	jump_progress = 0.0

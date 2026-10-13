@@ -29,7 +29,10 @@
   "speed_gate": {
     "min_speed": 6.0,
     "stumble_s": 1.5,
-    "width_m": 2
+    "width_m": 2,
+    "jump_s": 0.6,
+    "climb_s": 0.6,
+    "jump_height_px": 160
   },
   "m1": {
     "base_speed": {
@@ -57,7 +60,13 @@
     "hear_s": 0.25,
     "slam_offset_m": 2.0,
     "max_cover_distance_m": 12,
-    "safety_margin_m": 4
+    "safety_margin_m": 4,
+    "tell_bars": 1,
+    "first_freeze_s": 2,
+    "beam_half_width_m": 1.875,
+    "slam_s": 1,
+    "slam_shake_px": 16,
+    "shadow_fraction": 0.4
   },
   "safe_zone": {
     "half_width_m": 3,
@@ -69,14 +78,22 @@
   "respawn": {
     "invuln_s": 3,
     "no_scare_s": 10,
-    "capture_anim_s": 1.2
+    "capture_anim_s": 1.2,
+    "fade_s": 0.5,
+    "min_capture_gap_s": 3
   },
   "finale": {
     "window_early_s": 0.3,
     "window_late_s": 0.6,
     "surge_m": 12,
     "hits": 4,
-    "min_gap": 3
+    "min_gap": 3,
+    "surge_s": 0.5,
+    "flash_s": 1,
+    "world_return": 0.25,
+    "parallax_mult": 0.8,
+    "eye_close_s": 7.2,
+    "ring_s": 0.6
   },
   "scream_budget_s": {
     "S2": 30,
@@ -193,7 +210,19 @@
     "bloom_db": -20,
     "bridge_db": -19,
     "blur_db": -22,
-    "sample_rate": 22050
+    "sample_rate": 22050,
+    "threat_db": -14,
+    "warning_db": -15,
+    "capture_db": -14,
+    "gate_db": -18,
+    "safe_db": -22,
+    "door_db": -15,
+    "beat_db": -18,
+    "m1_far_db": -40,
+    "m1_near_db": -6,
+    "m1_far_m": 16,
+    "m1_near_m": 2,
+    "reduce_scare_db": -12
   },
   "layout": {
     "screen": [
@@ -307,5 +336,97 @@
       0.8
     ]
   },
-  "beats_per_bar": 4
+  "beats_per_bar": 4,
+  "ending": {
+    "therapist_s": 2,
+    "me_s": 3,
+    "speaker_rect": [
+      870,
+      848,
+      180,
+      50
+    ]
+  },
+  "level_view": {
+    "subtitle_s": 4,
+    "peek_begin_gap": 9.5,
+    "peek_end_gap": 16,
+    "peek_max_px": 180,
+    "chase_stress_gap": 16,
+    "gaze_stress": 0.6,
+    "safe_music_db": -40,
+    "fade_s": 0.5,
+    "progress_rect": [
+      580,
+      1038,
+      1260,
+      30
+    ],
+    "warning_rect": [
+      400,
+      70,
+      1120,
+      96
+    ],
+    "subtitle_rect": [
+      300,
+      790,
+      1320,
+      95
+    ],
+    "object_slots": {
+      "cover": [
+        420,
+        520
+      ],
+      "gate": [
+        160,
+        220
+      ],
+      "checkpoint": [
+        480,
+        120
+      ],
+      "door": [
+        500,
+        800
+      ]
+    },
+    "monster_rect": [
+      900,
+      1080
+    ],
+    "eye_rect": [
+      660,
+      150,
+      600,
+      300
+    ],
+    "crack_rect": [
+      0,
+      0,
+      1920,
+      440
+    ],
+    "beam_rect": [
+      300,
+      900
+    ],
+    "hand_rect": [
+      600,
+      900
+    ],
+    "decor_seeds": {
+      "S1": 1852,
+      "S2": 22,
+      "S3": 33,
+      "S4": 44,
+      "S5": 55
+    },
+    "decor_spacing_m": 4.5,
+    "m1_fps": 8
+  },
+  "simulation": {
+    "max_step_s": 0.02
+  }
 }

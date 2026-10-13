@@ -28,7 +28,9 @@ func _ready() -> void:
 	show_warning()
 
 func _process(_delta: float) -> void:
-	mic_warning.visible = VoiceInput.missing_microphone and not GameState.settings.keyboard_mode and not settings_panel.visible
+	mic_warning.visible = VoiceInput.missing_microphone and not GameState.settings.keyboard_mode and not settings_panel.visible and not current_view is EndingView
+	if current_view is RunView and current_view.state.status != "running":
+		mic_warning.hide()
 
 func replace_view(view: Control) -> void:
 	if current_view != null:
@@ -59,18 +61,22 @@ func show_clinic() -> void:
 
 func show_run() -> void:
 	var run := RunView.new()
-	run.milestone_finished.connect(show_r1_end)
+	run.run_finished.connect(show_ending)
 	replace_view(run)
 
-func show_r1_end() -> void:
+func show_ending() -> void:
+	var ending := EndingView.new()
+	ending.finished.connect(show_end_screen)
+	replace_view(ending)
+
+func show_end_screen() -> void:
 	Sfx.stop_all()
 	var screen := Control.new()
 	replace_view(screen)
 	UIFactory.texture(screen, "run_bg_far_cute", Rect2(0, 0, 1920, 1080))
 	UIFactory.texture(screen, "ui_panel_wide", Rect2(360, 290, 1200, 570))
-	UIFactory.label(screen, "r1_end_title", Rect2(420, 335, 1080, 110), GameState.balance.ui.title_size)
-	UIFactory.label(screen, "r1_end_body", Rect2(490, 485, 940, 140), GameState.balance.ui.body_size)
-	UIFactory.button(screen, "replay", Rect2(640, 691, 640, 80), show_clinic)
+	UIFactory.label(screen, "end_title", Rect2(420, 335, 1080, 200), GameState.balance.ui.title_size)
+	UIFactory.button(screen, "restart", Rect2(640, 641, 640, 80), show_clinic)
 
 func toggle_settings() -> void:
 	if settings_panel.visible:

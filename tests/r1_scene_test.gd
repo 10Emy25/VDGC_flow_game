@@ -6,7 +6,9 @@ func _ready() -> void:
 	var main = load("res://scenes/main.tscn").instantiate()
 	add_child(main)
 	check(main.settings_button.visible, "Settings button present on warning")
-	main.show_clinic()
+	for child in main.current_view.get_children():
+		if child is Button:
+			child.pressed.emit()
 	var clinic: ClinicView = main.current_view
 	check(clinic.flow.stage == 0, "Clinic begins with silence")
 	check(clinic.flow.get_parent() == clinic.hud_layer and clinic.hud_layer.layer > PostFX.layer, "Clinic text stays above trance and PostFX")
@@ -125,7 +127,7 @@ func _ready() -> void:
 	check(run.model.x > 88, "Raised bridge permits crossing")
 	run.model.x = 219.99
 	run._process(0.1)
-	check(main.current_view != run, "R1 stops at 220m")
+	check(main.current_view == run and run.state.section == "S2", "R1 flower path now continues into S2")
 	main.show_clinic()
 	check(main.current_view is ClinicView and main.current_view.flow.stage == 0, "Replay calibrates again, skipping warning")
 	main.queue_free()

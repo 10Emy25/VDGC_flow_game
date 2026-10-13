@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="900" viewBox="0 0 600 900"><defs>
+      <linearGradient id="sand" x2="0.2" y2="1"><stop stop-color="#e8d8ae"/><stop offset="1" stop-color="#baa57b"/></linearGradient>
+      <linearGradient id="wood" x2="0.8" y2="1"><stop stop-color="#a98561"/><stop offset="1" stop-color="#665343"/></linearGradient>
+      <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#c2dddf"/><stop offset="1" stop-color="#fff2db"/></linearGradient>
+      <pattern id="hatch" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M-3 12L12-3M3 15L15 3" stroke="#172322" opacity=".2" stroke-width="1"/></pattern>
+      <pattern id="grain" width="17" height="19" patternUnits="userSpaceOnUse"><circle cx="3" cy="5" r="1" fill="#51472e" opacity=".16"/><circle cx="12" cy="14" r=".8" fill="#fff5d7" opacity=".65"/></pattern>
+    </defs><g stroke="#1e251b" stroke-width="8" stroke-linejoin="round"><path d="M208 0H380L411 294Q470 403 465 517L542 599Q578 635 550 663L497 681L404 610L409 805Q407 874 370 875Q341 875 338 807L324 641L308 827Q307 899 269 889Q244 880 245 818L244 643L226 795Q216 867 184 854Q157 845 161 789L173 619L146 722Q127 788 92 764Q70 748 83 697L118 483Q131 421 179 380Z" fill="#c9ccb0"/><path d="M208 20L225 347L183 493L193 710M362 11L371 343L423 502" fill="none" stroke="#979e7c" stroke-width="26"/><path d="M205 399L351 490M194 426L368 527M185 462L378 561M213 533L320 572" stroke="#424c35" stroke-width="3"/><path d="M249 365L273 440L295 382" fill="none" stroke-width="4"/></g></svg>

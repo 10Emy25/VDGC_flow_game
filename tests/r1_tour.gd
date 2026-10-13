@@ -43,14 +43,19 @@ func _ready() -> void:
 	await snapshot("07_bridge")
 	key(KEY_CTRL, false)
 	# Exercise the §3 real-world services on a render-capable driver, without adding a scare.
+	run.process_mode = Node.PROCESS_MODE_DISABLED
 	GameState.world_real = 1.0
 	PostFX.stress = 0.7
+	for child in run.get_children():
+		if child is DualSprite: child.update_blend()
 	await snapshot("08_core_real_preview")
 	GameState.settings.reduce_distortion = true
+	for child in run.get_children():
+		if child is DualSprite: child.update_blend()
 	await snapshot("09_reduced_distortion")
 	GameState.world_real = 0
-	main.show_r1_end()
-	await snapshot("10_r1_end")
+	main.show_end_screen()
+	await snapshot("10_end_screen")
 	main.queue_free()
 	await get_tree().process_frame
 	finish()

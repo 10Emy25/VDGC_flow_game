@@ -7,6 +7,11 @@
     },
     {
       "x": 0,
+      "type": "checkpoint",
+      "id": "CP0"
+    },
+    {
+      "x": 0,
       "type": "tutorial"
     },
     {
@@ -15,8 +20,152 @@
       "length_m": 12
     },
     {
+      "x": 215,
+      "type": "song_cut"
+    },
+    {
       "x": 220,
-      "type": "r1_end"
+      "type": "face_slam"
+    },
+    {
+      "x": 220,
+      "type": "section",
+      "id": "S2"
+    },
+    {
+      "x": 222,
+      "type": "checkpoint",
+      "id": "CP1"
+    },
+    {
+      "x": 230,
+      "type": "subtitle",
+      "voice": "therapist",
+      "key": "now_run"
+    },
+    {
+      "x": 400,
+      "type": "checkpoint",
+      "id": "CP2"
+    },
+    {
+      "x": 410,
+      "type": "subtitle",
+      "voice": "therapist",
+      "key": "breathe"
+    },
+    {
+      "x": 470,
+      "type": "gate"
+    },
+    {
+      "x": 520,
+      "type": "gate"
+    },
+    {
+      "x": 560,
+      "type": "section",
+      "id": "S3"
+    },
+    {
+      "x": 560,
+      "type": "checkpoint",
+      "id": "CP3"
+    },
+    {
+      "x": 590,
+      "type": "gaze",
+      "bars": 2,
+      "scripted_first": true,
+      "subtitle": "hide_still"
+    },
+    {
+      "x": 600,
+      "type": "cover",
+      "art": "cover_flower_big"
+    },
+    {
+      "x": 670,
+      "type": "gaze",
+      "bars": 2
+    },
+    {
+      "x": 680,
+      "type": "cover",
+      "art": "cover_flower_big"
+    },
+    {
+      "x": 700,
+      "type": "checkpoint",
+      "id": "CP4"
+    },
+    {
+      "x": 760,
+      "type": "gate"
+    },
+    {
+      "x": 820,
+      "type": "section",
+      "id": "S4"
+    },
+    {
+      "x": 820,
+      "type": "checkpoint",
+      "id": "CP5"
+    },
+    {
+      "x": 850,
+      "type": "gaze",
+      "bars": 3
+    },
+    {
+      "x": 860,
+      "type": "cover",
+      "art": "cover_desk"
+    },
+    {
+      "x": 900,
+      "type": "gate"
+    },
+    {
+      "x": 960,
+      "type": "checkpoint",
+      "id": "CP6",
+      "respawn_gap": 15,
+      "scare": "false_safe"
+    },
+    {
+      "x": 990,
+      "type": "gaze",
+      "bars": 3,
+      "scare": "hold_breath"
+    },
+    {
+      "x": 1000,
+      "type": "cover",
+      "art": "cover_locker"
+    },
+    {
+      "x": 1050,
+      "type": "gate"
+    },
+    {
+      "x": 1080,
+      "type": "section",
+      "id": "S5"
+    },
+    {
+      "x": 1080,
+      "type": "checkpoint",
+      "id": "CP7"
+    },
+    {
+      "x": 1080,
+      "type": "finale"
+    },
+    {
+      "x": 1140,
+      "type": "door"
     }
   ]
 }

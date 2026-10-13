@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate only R1 SVG/WAV placeholders. Never modify data or existing PNGs.
+"""Generate shipped R1/R2 SVG/WAV placeholders. Never modify data or existing PNGs.
 Existing SVG/WAV files are preserved unless --refresh-placeholders is passed.
 """
 from pathlib import Path
@@ -190,3 +190,88 @@ for key,duration in (('sfx_sand',.35),('sfx_blur_in',BALANCE['sand']['transition
         samples.append(low*env*.55)
     wav(key,samples)
 print('R1 placeholder resources ready (data and PNGs untouched).')
+# R2 silhouettes; all existing R1 files remain untouched by default.
+for real in (False,True):
+    suffix='_real' if real else '_cute'
+    ink='#20251e' if real else '#3c6154'
+    wood='#777960' if real else '#bcad8d'
+    for state in ('mina_crouch','mina_caught'):
+        count=BALANCE['art_frames'][state]
+        body=''
+        for i in range(count):
+            transform='translate(48,137) scale(.7,.65)' if state=='mina_crouch' else f'translate(0,18) rotate({math.sin(i/count*math.tau)*12:.1f} 150 300)'
+            body+=f'<g transform="translate({i*300},0)"><g transform="{transform}">{person(i/count,False,real)}</g></g>'
+        svg(state+suffix,count*300,360,body)
+    svg('cover_flower_big'+suffix,420,520,f'<g transform="translate(2,0) scale(2.6)">{flower(real)}</g>')
+    svg('cover_desk'+suffix,420,520,f'''<g stroke="{ink}" stroke-width="9" stroke-linejoin="round"><path d="M54 201L75 504H106L124 217M288 207L303 504H342L357 207" fill="{wood}"/><path d="M26 167L346 107L403 184L72 263Z" fill="{wood}"/><path d="M72 263L403 184V217L76 296Z" fill="{'#575d47' if real else '#8e8e6c'}"/><path d="M58 172L327 129L375 178L85 239Z" fill="{'#a2a488' if real else '#e1cfa5'}" stroke-width="4"/><path d="M149 158L227 149M95 215L271 178M128 216L307 177" fill="none" stroke-width="2" opacity=".45"/></g><path d="M60 188L350 136M84 263L354 204" stroke="#f5edcf" stroke-width="3" opacity=".35"/>''')
+    svg('cover_locker'+suffix,420,520,f'''<g stroke="{ink}" stroke-width="8"><path d="M57 18L337 9L372 41V506H50Z" fill="{wood}"/><path d="M57 18L337 9V477L50 506Z" fill="{'#a5aa8d' if real else '#adc9b3'}"/><path d="M80 44L307 32V456L76 475Z" fill="none" stroke-width="4"/><path d="M108 83L266 75M108 101L266 93M108 119L266 111M112 393L270 381M112 411L270 399" fill="none" stroke-width="7"/><rect x="277" y="240" width="14" height="50" rx="4" fill="#d9dabd" stroke-width="3"/><path d="M98 191L224 68M98 218L240 77M182 345L275 252" fill="none" stroke-width="2" opacity=".25"/></g>''')
+    svg('cover_bag'+suffix,420,520,f'''<g stroke="{ink}" stroke-width="8"><path d="M145 122Q148 34 223 35Q285 41 284 124" fill="none" stroke-width="22"/><path d="M94 103Q42 225 70 465Q220 520 366 462L354 161Q304 94 94 103Z" fill="{wood}"/><path d="M116 166Q236 123 322 180L316 287Q219 335 111 286Z" fill="{'#b8b99a' if real else '#d9b9ac'}"/><path d="M118 333L310 326L304 443L111 444Z" fill="none" stroke-width="5"/><path d="M87 164L85 417M337 196L345 417" stroke-width="4" opacity=".45"/></g>''')
+    svg('gap_crack'+suffix,200,220,f'<path d="M0 4L73 0L85 32L123 6L200 3V220H0Z" fill="{ink}"/><path d="M5 36L45 71L16 146L51 211M195 30L154 104L188 138L151 211" fill="none" stroke="{wood}" stroke-width="6"/><path d="M60 50L80 101M129 99L151 174" stroke="#929981" stroke-width="3"/>')
+    svg('prop_school_item'+suffix,200,200,f'''<g stroke="{ink}" stroke-width="5" stroke-linejoin="round"><path d="M25 33L156 18L178 161L39 181Z" fill="{wood}"/><path d="M45 48L143 36L162 145L53 164Z" fill="{'#ced0b2' if real else '#eee2c3'}"/><path d="M59 73L130 66M62 95L136 87M68 117L137 110" opacity=".35"/><path d="M152 39L169 30L193 166L177 169Z" fill="{'#8c2023' if real else '#ad806b'}"/></g>''')
+
+
+def face(cx,cy,rx,ry,turn=0,blink=0):
+    pupil=(4+blink)*math.cos(math.radians(turn))
+    pupil_y=-(4+blink)*math.sin(math.radians(turn))
+    return f'''<g transform="rotate({turn} {cx} {cy})" stroke="#181c16" stroke-width="4">
+      <ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}" fill="#d2d3b6"/>
+      <path d="M{cx-rx*.85} {cy}Q{cx-rx*.7} {cy+ry*.8} {cx} {cy+ry*.9}" fill="none" stroke="#8d9377" stroke-width="8"/>
+      <ellipse cx="{cx-rx*.4}" cy="{cy-ry*.2}" rx="{rx*.26}" ry="{ry*.18}" fill="#efefd8"/>
+      <ellipse cx="{cx+rx*.4}" cy="{cy-ry*.2}" rx="{rx*.26}" ry="{ry*.18}" fill="#efefd8"/>
+      <circle cx="{cx-rx*.4+pupil}" cy="{cy-ry*.2+pupil_y}" r="{rx*.1}" fill="#101713"/>
+      <circle cx="{cx+rx*.4+pupil}" cy="{cy-ry*.2+pupil_y}" r="{rx*.1}" fill="#101713"/>
+      <ellipse cx="{cx}" cy="{cy+ry*.4}" rx="{rx*.28}" ry="{ry*.42}" fill="#101713"/>
+      <path d="M{cx-rx*.16} {cy+ry*.03}L{cx+rx*.16} {cy+ry*.03}M{cx-rx*.15} {cy+ry*.72}L{cx+rx*.15} {cy+ry*.72}" stroke="#e8e5d1" stroke-width="5"/>
+      <path d="M{cx} {cy-ry*.25}L{cx-rx*.14} {cy+ry*.08}L{cx+rx*.1} {cy+ry*.11}" fill="none" stroke-width="2"/>
+      <ellipse cx="{cx}" cy="{cy}" rx="{rx}" ry="{ry}" fill="url(#hatch)"/>
+    </g>'''
+wall_count=BALANCE['art_frames']['m1_wall']; wall_body=''
+for frame in range(wall_count):
+    monster_rng=random.Random(863)
+    body='<path d="M0 0H770L834 74L813 144L864 250L826 364L877 489L836 604L890 754L863 907L900 1080H0Z" fill="#737b61" stroke="#171e16" stroke-width="8"/>'
+    for row in range(7):
+        for col in range(5):
+            body+=face(65+col*156+monster_rng.uniform(-25,25),65+row*155+monster_rng.uniform(-25,25),monster_rng.uniform(52,88),monster_rng.uniform(75,123),monster_rng.choice([-24,17,0,180]),math.sin(frame/wall_count*math.tau))
+    body+='<path d="M826 210L897 386L851 451M838 699L899 861L877 970" fill="none" stroke="#4b1819" stroke-width="5"/>'
+    wall_body+=f'<g transform="translate({frame*900},0)">{body}</g>'
+svg('m1_wall',900*wall_count,1080,wall_body)
+svg('m1_face_peek',500,500,face(265,254,187,232,-12,1))
+svg('m2_sky_crack',1920,440,'<path d="M0 0H1920V92L1690 118L1610 239L1455 163L1388 273L1171 196L960 377L761 202L550 281L423 156L277 229L202 102L0 121Z" fill="#1a2018"/><path d="M32 110L210 123L281 252L418 186L551 310L771 233L962 407L1180 220L1388 297L1450 190L1618 267L1701 144L1900 115" fill="none" stroke="#c1c7a6" stroke-width="5"/><path d="M112 90L820 158M1038 108L1840 62" stroke="#6e775a" stroke-width="3"/>')
+for opened in (True,False):
+    body='<path d="M10 148Q295-82 588 145Q304 391 10 148Z" fill="#d1d3b7" stroke="#161e16" stroke-width="10"/>'
+    if opened:
+        body+='<ellipse cx="302" cy="150" rx="99" ry="124" fill="#949f6d" stroke="#222b1b" stroke-width="7"/><ellipse cx="310" cy="151" rx="31" ry="93" fill="#101710"/><ellipse cx="338" cy="104" rx="12" ry="23" fill="#eee9ce"/><path d="M35 152L140 131L201 162M567 146L482 173L405 132" fill="none" stroke="#762e2d" stroke-width="3"/>'
+    else:
+        body='<path d="M10 146Q290 291 588 145Q304 211 10 146Z" fill="#9ca483" stroke="#192319" stroke-width="9"/><path d="M56 161Q298 266 555 160" fill="none" stroke="#d1d3b5" stroke-width="5"/>'
+    body+='<path d="M65 91L135 123M86 79L161 118M413 116L500 83M439 130L527 106" stroke="#232b1e" stroke-width="2" opacity=".5"/>'
+    svg('m2_eye_open' if opened else 'm2_eye_closed',600,300,body)
+svg('m2_beam',300,900,'<defs><linearGradient id="beam" x2="0" y2="1"><stop stop-color="#d4d9a8" stop-opacity=".04"/><stop offset="1" stop-color="#d4d9a8" stop-opacity=".42"/></linearGradient></defs><path d="M136 0H164L297 900H3Z" fill="url(#beam)"/><ellipse cx="150" cy="885" rx="143" ry="13" fill="#e3e8bf" opacity=".48"/>')
+svg('m2_hand',600,900,'''<g stroke="#1e251b" stroke-width="8" stroke-linejoin="round"><path d="M208 0H380L411 294Q470 403 465 517L542 599Q578 635 550 663L497 681L404 610L409 805Q407 874 370 875Q341 875 338 807L324 641L308 827Q307 899 269 889Q244 880 245 818L244 643L226 795Q216 867 184 854Q157 845 161 789L173 619L146 722Q127 788 92 764Q70 748 83 697L118 483Q131 421 179 380Z" fill="#c9ccb0"/><path d="M208 20L225 347L183 493L193 710M362 11L371 343L423 502" fill="none" stroke="#979e7c" stroke-width="26"/><path d="M205 399L351 490M194 426L368 527M185 462L378 561M213 533L320 572" stroke="#424c35" stroke-width="3"/><path d="M249 365L273 440L295 382" fill="none" stroke-width="4"/></g>''')
+svg('safe_puddle',480,120,'<ellipse cx="240" cy="65" rx="238" ry="52" fill="#e5f0d9" opacity=".4"/><ellipse cx="240" cy="64" rx="209" ry="39" fill="#adbdb1" stroke="#6f8f83" stroke-width="4"/><ellipse cx="240" cy="64" rx="180" ry="29" fill="#dfe8da"/><path d="M154 42H323V86H154ZM239 42V86M154 65H323" fill="none" stroke="#8fa79a" stroke-width="6"/><path d="M43 78Q240 121 437 78" fill="none" stroke="#f4f4db" stroke-width="4"/>')
+svg('light_door',500,800,'<path d="M250 2Q22 81 9 438V800H489V438Q479 74 250 2Z" fill="#e8eed7" opacity=".15"/><path d="M96 799V230Q251 32 407 230V799Z" fill="#f8f8e6" stroke="#c3cfaf" stroke-width="14"/><path d="M127 787V244Q250 101 375 244V787" fill="none" stroke="#fff" stroke-width="12"/><path d="M250 167V786" stroke="#e3ead1" stroke-width="4"/><circle cx="342" cy="518" r="10" fill="#cad6b8"/>')
+svg('ui_beat_ring',500,500,'<circle cx="250" cy="250" r="233" fill="none" stroke="#eff3cb" stroke-width="8"/><circle cx="250" cy="250" r="212" fill="none" stroke="#b4c98d" stroke-width="3"/><path d="M250 3V45M250 455V497M3 250H45M455 250H497" stroke="#fff5da" stroke-width="8"/>')
+# R2 threat/interaction audio; full layered music and scares stay in R3.
+for key in ('amb_m1_breath','amb_m1_sand','amb_m2_light'):
+    samples=[];noise=0;arng=random.Random(741)
+    base=55 if key=='amb_m1_breath' else (82 if key=='amb_m1_sand' else 392)
+    base=round(base*loop_s)/loop_s
+    for i in range(round(loop_s*SR)):
+        t=i/SR;noise=noise*.93+arng.uniform(-1,1)*.07
+        envelope=math.sin(math.pi*t/loop_s)**2
+        drone=.19*math.sin(math.tau*base*t)+.09*math.sin(math.tau*base*2*t)
+        samples.append(drone*(.3+.7*envelope)+noise*envelope*.6)
+    wav(key,samples)
+for key,duration in (('sfx_m1_roar',1.2),('sfx_m2_crack',.8),('sfx_m2_slam',1),('sfx_m2_grab',1.2),('sfx_capture',1.2),('sfx_jump',.6),('sfx_stumble',1),('sfx_safe',1.2),('sfx_door',1),('sfx_beat_call',.6),('sfx_all_clear',1.2)):
+    samples=[0.0]*round(duration*SR)
+    if key in ('sfx_safe','sfx_door','sfx_beat_call','sfx_all_clear'):
+        for start,hz in ((0,329.63),(.08,493.88),(.16,659.25)):
+            tone(samples,start,duration-start,hz,.18)
+    else:
+        low=0;arng=random.Random(882)
+        for i in range(len(samples)):
+            t=i/SR;low=low*.85+arng.uniform(-1,1)*.15
+            attack=min(1,t/.008);tail=(1-t/duration)**2
+            base=45 if key in ('sfx_m2_slam','sfx_stumble') else 91
+            samples[i]=(low*.6+.28*math.sin(math.tau*(base*t+8*math.sin(t*9))))*attack*tail
+    wav(key,samples)
+print('R2 threat and level resources ready.')

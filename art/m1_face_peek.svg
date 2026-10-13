@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500" viewBox="0 0 500 500"><defs>
+      <linearGradient id="sand" x2="0.2" y2="1"><stop stop-color="#e8d8ae"/><stop offset="1" stop-color="#baa57b"/></linearGradient>
+      <linearGradient id="wood" x2="0.8" y2="1"><stop stop-color="#a98561"/><stop offset="1" stop-color="#665343"/></linearGradient>
+      <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#c2dddf"/><stop offset="1" stop-color="#fff2db"/></linearGradient>
+      <pattern id="hatch" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M-3 12L12-3M3 15L15 3" stroke="#172322" opacity=".2" stroke-width="1"/></pattern>
+      <pattern id="grain" width="17" height="19" patternUnits="userSpaceOnUse"><circle cx="3" cy="5" r="1" fill="#51472e" opacity=".16"/><circle cx="12" cy="14" r=".8" fill="#fff5d7" opacity=".65"/></pattern>
+    </defs><g transform="rotate(-12 265 254)" stroke="#181c16" stroke-width="4">
+      <ellipse cx="265" cy="254" rx="187" ry="232" fill="#d2d3b6"/>
+      <path d="M106.05000000000001 254Q134.1 439.6 265 462.8" fill="none" stroke="#8d9377" stroke-width="8"/>
+      <ellipse cx="190.2" cy="207.6" rx="48.620000000000005" ry="41.76" fill="#efefd8"/>
+      <ellipse cx="339.8" cy="207.6" rx="48.620000000000005" ry="41.76" fill="#efefd8"/>
+      <circle cx="195.090738003669" cy="208.63955845408879" r="18.7" fill="#101713"/>
+      <circle cx="344.690738003669" cy="208.63955845408879" r="18.7" fill="#101713"/>
+      <ellipse cx="265" cy="346.8" rx="52.36000000000001" ry="97.44" fill="#101713"/>
+      <path d="M235.07999999999998 260.96L294.92 260.96M236.95 421.03999999999996L293.05 421.03999999999996" stroke="#e8e5d1" stroke-width="5"/>
+      <path d="M265 196.0L238.82 272.56L283.7 279.52" fill="none" stroke-width="2"/>
+      <ellipse cx="265" cy="254" rx="187" ry="232" fill="url(#hatch)"/>
+    </g></svg>
