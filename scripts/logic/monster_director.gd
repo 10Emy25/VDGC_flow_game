@@ -57,7 +57,9 @@ func request_gaze(event: Dictionary, clock_time: float) -> void:
 	delayed = false
 	scheduled = next_bar(clock_time)
 	# Warning starts at the next bar as specified. Tell occupies the remaining trigger bar.
-	if not in_safe and no_scare_left <= 0.0:
+	# The eye is part of the level, not a scare: respawn scare protection must not postpone it,
+	# or it would open later, far from the cover it was placed next to.
+	if not in_safe:
 		change_phase("TELL", clock_time, scheduled - clock_time)
 
 func gaze_decision(bars: int, already_delayed: bool) -> Dictionary:
@@ -70,6 +72,12 @@ func gaze_decision(bars: int, already_delayed: bool) -> Dictionary:
 	if available < 1:
 		return {"action": "skip", "bars": 0}
 	return {"action": "start", "bars": mini(bars, available)}
+
+# Drop a gaze that never got going (e.g. Mina already ran past its cover).
+func cancel_pending() -> void:
+	if phase in ["IDLE", "TELL"]:
+		pending.clear()
+		phase = "IDLE"
 
 func reset_hearing() -> void:
 	hearing_count = 0
@@ -210,7 +218,7 @@ func advance_gaze() -> void:
 	if finale:
 		return
 	if phase == "IDLE" and not pending.is_empty() and clock >= scheduled:
-		if in_safe or no_scare_left > 0.0:
+		if in_safe:
 			scheduled = next_bar(clock)
 		else:
 			change_phase("TELL", scheduled, balance.m2.tell_bars * balance.bar_s)

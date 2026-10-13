@@ -118,7 +118,9 @@ func _ready() -> void:
 	check(d.phase == "IDLE", "No gaze starts in safe zone")
 	d.no_scare_left = 10
 	d.step(1, 0, "S3", false, true, false, 5)
-	check(d.phase == "IDLE", "No gaze starts inside respawn scare protection")
+	check(d.phase != "IDLE", "Respawn scare protection does not postpone the eye (it must open next to its cover)")
+	d.phase = "IDLE"
+	d.pending.clear()
 	d.spawn()
 	d.begin_finale()
 	d.gap = -20

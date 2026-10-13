@@ -74,6 +74,51 @@ func _ready() -> void:
 	s.director.phase = "IDLE"
 	s.step(.5, 7, true, true, 3)
 	check(not s.magnet and s.run.x > 458, "Magnet lets go when the eye is done")
+	# Regression: after dying and respawning at the checkpoint before the eye, hiding must still work.
+	for attempt in range(2):
+		s = LevelModel.new(b, GameState.level, GameState.song)
+		place(s, 425)
+		s.save_checkpoint(checkpoint(s, "CP2"))
+		if attempt == 1:
+			s.director.grace_left = 0
+			s.director.safe_hold_left = 0
+			s.director.gap = -1
+			s.step(.02, 0, false, false, 0)
+			s.step(1.8, 0, false, false, 0)
+			check(s.status == "running" and is_equal_approx(s.run.x, 420), "Died and respawned at CP2")
+		var hid_in_gaze := false
+		var caught := false
+		for i in range(60 * 25):
+			var busy := s.director.eye_busy() or not s.director.pending.is_empty()
+			var tier := 0 if busy else 3
+			s.step(1.0 / 60.0, 7.0 if tier == 3 else 0.0, tier == 3, tier == 3, tier)
+			if s.director.phase == "GAZE" and s.hidden: hid_in_gaze = true
+			if s.status != "running": caught = true
+			if s.run.x > 470 and s.director.phase == "IDLE" and hid_in_gaze: break
+		check(hid_in_gaze and not caught, "First eye can be hidden from (%s)" % ("after respawn" if attempt == 1 else "first try"))
+	# Same check for every eye in the level, respawning at the checkpoint before it.
+	for gaze in LevelData.new(GameState.level).of_type("gaze"):
+		s = LevelModel.new(b, GameState.level, GameState.song)
+		var before: Dictionary = {}
+		for cp in s.level.of_type("checkpoint"):
+			if cp.x < gaze.x: before = cp
+		place(s, before.x + 5)
+		s.save_checkpoint(before)
+		s.director.grace_left = 0
+		s.director.safe_hold_left = 0
+		s.director.gap = -1
+		s.step(.02, 0, false, false, 0)
+		s.step(1.8, 0, false, false, 0)
+		var hid := false
+		var lost := false
+		for i in range(60 * 30):
+			var busy := s.director.eye_busy() or not s.director.pending.is_empty()
+			var tier := 0 if busy or s.run.guarded else 3
+			s.step(1.0 / 60.0, 7.0 if tier == 3 else 0.0, tier == 3, tier == 3, tier)
+			if s.director.phase == "GAZE" and s.hidden and absf(s.run.x - gaze.x) < 15: hid = true
+			if s.status != "running": lost = true
+			if hid and s.director.phase == "IDLE" and s.run.x > gaze.x + 20: break
+		check(hid and not lost, "Eye at %d m can be hidden from after respawning at %s" % [gaze.x, before.id])
 	# Checkpoints.
 	s = LevelModel.new(b, GameState.level, GameState.song)
 	place(s, 345)

@@ -112,6 +112,12 @@ func step_once(delta: float, target: float, shouting: bool, audible: bool, tier:
 		safe_id = ""
 	hidden = level.covered(run.x, run.speed, balance) and run.gate_state.is_empty()
 	director.step(delta, run.x - old_x, section, not safe.is_empty(), hidden, audible, clock)
+	# Safety net: an eye may only open next to its cover. If Mina is already past it, skip that eye.
+	if not director.pending.is_empty() and director.phase in ["IDLE", "TELL"]:
+		var cover := cover_after(director.pending.x)
+		if cover.is_empty() or run.x > cover.x + balance.m2.magnet_after_m:
+			director.cancel_pending()
+			messages.append({"type": "gaze_skipped"})
 	for event in director.events:
 		messages.append({"type": event})
 	if director.captured:
@@ -238,6 +244,12 @@ func step_obstacles(delta: float, old_x: float, shouting: bool) -> void:
 			messages.append({"type": "slip"})
 	else:
 		plank_over_s = 0.0
+
+func cover_after(x: float) -> Dictionary:
+	for cover in level.of_type("cover"):
+		if cover.x >= x:
+			return cover
+	return {}
 
 func magnet_cover() -> Dictionary:
 	var best: Dictionary = {}
