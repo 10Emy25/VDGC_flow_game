@@ -4,26 +4,29 @@ func _ready() -> void:
 	var b := GameState.balance
 	var s := LevelModel.new(b, GameState.level, GameState.song)
 	check(s.section == "S1" and not s.director.active, "No threat in S1")
-	near(s.song_end, 67.2, "Model knows when the song is cut off")
-	place(s, 195)
+	near(s.song_end, 48, "Model knows when the song is cut off")
+	place(s, 230, true)
 	s.run.speed = 3
 	s.step(1, 3, false, true, 2, 30)
-	check(s.holding and s.run.x == 196, "Path holds at the song's end point until the song is cut")
-	check(s.section == "S1", "Still S1 while the song plays")
-	s.step(.02, 3, false, true, 2, 67.21)
+	check(s.section == "S1" and s.run.x > 232, "No waiting at the end of the flower path")
+	var gate_before: float = s.level.first("gate").x
+	var x_at_slam := s.run.x
+	s.step(.02, 3, false, true, 2, 48.01)
 	check(s.slammed and s.section == "S2" and s.director.active, "Song cut triggers the face slam and the chase")
 	check(s.messages.any(func(m: Dictionary) -> bool: return m.type == "face_slam"), "Face slam message")
 	check(s.checkpoint.event.id == "SLAM" and s.checkpoint.event.section == "S2", "Slam saves a chase checkpoint")
+	near(s.level.first("gate").x - gate_before, s.checkpoint.event.x - 200, "Chase shifted to begin at the slam point", .001)
+	check(GameState.level.events.any(func(e: Dictionary) -> bool: return e.type == "gate" and e.x == 245), "Shared level data untouched")
 	near(s.director.gap, 8, "Wall appears 8 m behind")
 	# Slow players get slammed wherever they are; respawn keeps them in the chase.
 	s = LevelModel.new(b, GameState.level, GameState.song)
 	place(s, 40)
-	s.step(.02, 0, false, false, 0, 67.3)
+	s.step(.02, 0, false, false, 0, 48.1)
 	check(s.slammed and s.bridge_ready, "Slam before the bridge lowers it for the chase")
 	s.director.grace_left = 0
 	s.director.gap = -1
-	s.step(.02, 0, false, false, 0, 67.32)
-	s.step(1.8, 0, false, false, 0, 69.1)
+	s.step(.02, 0, false, false, 0, 48.12)
+	s.step(1.8, 0, false, false, 0, 49.9)
 	check(s.status == "running" and s.section == "S2" and s.director.active and is_equal_approx(s.run.x, 40), "Respawn after an early slam stays in the chase")
 	# Face walls.
 	s = LevelModel.new(b, GameState.level, GameState.song)
@@ -125,13 +128,14 @@ func _ready() -> void:
 	check(finale.messages.any(func(m: Dictionary) -> bool: return m.type == "beat_call"), "Finale calls on next downbeat")
 	finish()
 
-func place(s: LevelModel, x: float) -> void:
+func place(s: LevelModel, x: float, song: bool = false) -> void:
 	s.run.reset_position(x)
 	s.bridge_ready = true
 	s.bridge_progress = 1
-	s.section = s.level.section_at(x)
+	s.section = "S1" if song else s.level.section_at(x)
+	s.slammed = s.section != "S1"
 	s.cursor = 0
-	while s.cursor < s.level.events.size() and s.level.events[s.cursor].x <= x:
+	while s.cursor < s.level.events.size() and s.level.events[s.cursor].x <= x and (not song or s.level.events[s.cursor].x < 200):
 		s.cursor += 1
 	if s.section != "S1":
 		s.director.spawn()

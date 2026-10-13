@@ -26,21 +26,21 @@ func _ready() -> void:
 	await snapshot("01_twinkle")
 	# S1, changed verse.
 	run.model.x = 120
-	BeatClock.elapsed = 33.7
+	BeatClock.elapsed = 30.0
 	run.flash_left = 0
-	GameState.world_real = .22
+	GameState.world_real = .27
 	advance(.02, false)
 	run.update_song()
 	run.flash_left = 0
-	GameState.world_real = .22
+	GameState.world_real = .27
 	run.update_view(0)
 	await snapshot("02_dark_verse")
-	BeatClock.elapsed = 62.0
-	GameState.world_real = .35
+	BeatClock.elapsed = 45.0
+	GameState.world_real = .55
 	advance(.02, false)
 	run.update_song()
 	run.flash_left = 0
-	GameState.world_real = .35
+	GameState.world_real = .55
 	run.update_view(0)
 	await snapshot("03_rosie")
 	# Face slam.

@@ -45,7 +45,7 @@ func _ready() -> void:
 	advance(.26)
 	check(run.state.status == "captured" and run.state.director.capture_cause == "hearing", "Second keyboard sound captures")
 	key(KEY_SHIFT, false)
-	place(229.9)
+	place(244.9)
 	run.model.speed = 7
 	key(KEY_SPACE, true)
 	advance(.03)
@@ -136,6 +136,7 @@ func place(x: float) -> void:
 	run.state.bridge_ready = true
 	run.state.bridge_progress = 1
 	run.state.section = run.level.section_at(x)
+	run.state.slammed = run.state.section != "S1"
 	run.state.cursor = 0
 	while run.state.cursor < run.level.events.size() and run.level.events[run.state.cursor].x <= x:
 		run.state.cursor += 1

@@ -20,10 +20,6 @@
       "length_m": 12
     },
     {
-      "x": 196,
-      "type": "song_hold"
-    },
-    {
       "x": 200,
       "type": "section",
       "id": "S2"
@@ -35,7 +31,7 @@
       "key": "now_run"
     },
     {
-      "x": 230,
+      "x": 245,
       "type": "gate"
     },
     {

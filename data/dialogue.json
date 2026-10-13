@@ -77,7 +77,13 @@
     "wall_hint": "SHOUT TO BREAK THROUGH.",
     "plank_hint": "EASY. DON'T SHOUT.",
     "slip_hint": "TOO FAST.",
-    "hold_hint": "KEEP SINGING.",
-    "lunge_hint": "SHOUT!"
+    "lunge_hint": "SHOUT!",
+    "stuck_wall": "THE FACES BLOCK THE WAY. SHOUT AT THEM!",
+    "stuck_plank": "YOU SLIPPED. GO SLOWER: TALK LOUDLY, DON'T SHOUT.",
+    "stuck_bridge": "HOLD A TALKING VOICE TO RAISE THE BRIDGE.",
+    "stuck_gate": "YOU FELL SHORT. SHOUT TO JUMP NEXT TIME.",
+    "stuck_cover": "STAY STILL AND SILENT UNTIL THE EYE CLOSES.",
+    "stuck_quiet": "MAKE A SOUND TO MOVE. LOUDER IS FASTER.",
+    "stuck_safe": "YOU'RE SAFE HERE. MAKE A SOUND TO GO ON."
   }
 }

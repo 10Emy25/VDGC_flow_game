@@ -125,12 +125,13 @@ func _ready() -> void:
 	check(run.bridge_ready, "One cumulative bar of TALK raises bridge")
 	run._process(0.3)
 	check(run.model.x > 70, "Raised bridge permits crossing")
-	run.model.x = 195.99
+	run.model.x = 240
 	run._process(0.1)
-	check(run.state.holding and run.state.section == "S1" and run.prompt.text == GameState.text("hold_hint"), "Path waits at the arch while the song plays")
+	check(run.state.section == "S1" and run.model.x >= 240, "Flower path keeps going while the song plays: no waiting")
 	BeatClock.elapsed = run.song.duration + 0.01
 	run._process(0.02)
 	check(main.current_view == run and run.state.section == "S2" and run.slam_face.visible, "Song cut leads into the face slam and S2")
+	check(run.state.level.first("gate").x > 260, "The chase is shifted to start where the slam happened")
 	main.show_clinic()
 	check(main.current_view is ClinicView and main.current_view.flow.stage == 0, "Replay calibrates again, skipping warning")
 	main.queue_free()

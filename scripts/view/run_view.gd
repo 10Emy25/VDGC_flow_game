@@ -107,14 +107,14 @@ func _ready() -> void:
 			var face_wall := dual("face_wall", Rect2(0, GameState.balance.layout.feet_y - wall_dims[1], wall_dims[0], wall_dims[1]), true)
 			face_wall.z_index = 3
 			face_wall.pivot_offset = Vector2(wall_dims[0] * 0.5, wall_dims[1])
-			objects.append({"sprite": face_wall, "x": event.x, "kind": kind})
+			objects.append({"sprite": face_wall, "event": event, "kind": kind})
 			walls[event.x] = face_wall
 			continue
 		if kind == "plank":
 			var plank_dims: Array = GameState.balance.level_view.object_slots.plank
 			var plank := dual("plank", Rect2(0, GameState.balance.layout.feet_y - 20, event.length_m * GameState.balance.px_per_m + plank_dims[0], plank_dims[1]))
 			plank.z_index = 1
-			objects.append({"sprite": plank, "x": event.x, "kind": kind})
+			objects.append({"sprite": plank, "event": event, "kind": kind})
 			continue
 		if kind not in ["cover", "checkpoint", "gate", "door"]:
 			continue
@@ -128,7 +128,7 @@ func _ready() -> void:
 		else:
 			sprite = dual(key, Rect2(0, GameState.balance.layout.feet_y - (0 if kind == "gate" else dims[1]), dims[0], dims[1]))
 		sprite.z_index = 3 if kind == "cover" else 1
-		objects.append({"sprite": sprite, "x": event.x, "kind": kind})
+		objects.append({"sprite": sprite, "event": event, "kind": kind})
 	wall = dual("m1_wall", Rect2(0, GameState.balance.layout.feet_y - 1080, 900, 1080), true)
 	wall.animation_fps = GameState.balance.level_view.m1_fps
 	wall.z_index = 2
@@ -208,6 +208,9 @@ func make_decoration() -> void:
 	for index in range(sections.size()):
 		var event: Dictionary = sections[index]
 		var end_x: float = sections[index + 1].x if index + 1 < sections.size() else level.first("door").x
+		if event.id == "S1":
+			# The flower path may run on past S2's nominal start if the song is still playing.
+			end_x = maxf(end_x, GameState.balance.song_view.s1_decor_end_m)
 		var rng := RandomNumberGenerator.new()
 		rng.seed = GameState.balance.level_view.decor_seeds[event.id]
 		var distance: float = event.x
@@ -220,7 +223,7 @@ func make_decoration() -> void:
 				var prop := dual(key, Rect2(0, GameState.balance.layout.feet_y - 160, 110, 160))
 				if event.id == "S1":
 					prop.modulate = Color.from_hsv(rng.randf_range(0.0, 1.0), 0.12, 1.0)
-				world_props.append({"sprite": prop, "x": distance + rng.randf_range(-0.5, 0.5), "life": INF})
+				world_props.append({"sprite": prop, "x": distance + rng.randf_range(-0.5, 0.5), "life": INF, "section": event.id})
 			distance += spacing
 
 func refresh_hint() -> void:
@@ -272,6 +275,14 @@ func handle_message(message: Dictionary) -> void:
 				Sfx.loop("mus_song", true, audio.song_db)
 		"face_slam":
 			slam_age = 0.0
+			for prop in world_props:
+				if prop.get("section", "S1") == "S1":
+					if prop.x > model.x + 2.0: prop.life = 0.0
+				else:
+					prop.x += message.get("offset", 0.0)
+			walls.clear()
+			for object in objects:
+				if object.kind == "face_wall": walls[object.event.x] = object.sprite
 			if Sfx.loops.has("mus_song"):
 				Sfx.loop("mus_song", false)
 				BeatClock.adopt_master("mus_pad")
@@ -418,7 +429,7 @@ func update_view(delta: float) -> void:
 	if state.status != "running":
 		prompt_key = "capture_hint"
 	elif in_song:
-		prompt_key = "hold_hint" if state.holding else ("bridge_hint" if bridge_waiting else ("" if tutorial.complete() else tutorial.stages[tutorial.index].key))
+		prompt_key = ("bridge_hint" if bridge_waiting else ("" if tutorial.complete() else tutorial.stages[tutorial.index].key))
 	elif hint_left > 0.0: prompt_key = hint_key
 	elif state.section == "S5": prompt_key = "finale_hint"
 	elif state.wall_waiting >= 0.0: prompt_key = "wall_hint"
@@ -431,6 +442,13 @@ func update_view(delta: float) -> void:
 	elif d.phase == "TELL": prompt_key = "tell_hint"
 	elif not state.safe_id.is_empty(): prompt_key = "safe_hint"
 	elif clear_left > 0.0: prompt_key = "clear_hint"
+	if state.status == "running" and state.still_s >= b.stuck.after_s and d.phase in ["IDLE", "TELL"] and (not in_song or bridge_waiting):
+		if state.wall_waiting >= 0.0: prompt_key = "stuck_wall"
+		elif state.slip_left > 0.0 or state.on_plank: prompt_key = "stuck_plank"
+		elif bridge_waiting: prompt_key = "stuck_bridge"
+		elif not model.gate_state.is_empty(): prompt_key = "stuck_gate"
+		elif not state.safe_id.is_empty(): prompt_key = "stuck_safe"
+		else: prompt_key = "stuck_quiet"
 	prompt.text = "" if prompt_key.is_empty() else GameState.text(prompt_key)
 	prompt.visible = not prompt.text.is_empty()
 	hint_left = maxf(0.0, hint_left - delta)
@@ -453,7 +471,7 @@ func update_view(delta: float) -> void:
 			prop.sprite.queue_free()
 	world_props = world_props.filter(func(prop: Dictionary) -> bool: return prop.life > 0.0)
 	for object in objects:
-		object.sprite.position.x = object.x * b.px_per_m - camera_x - (0.0 if object.kind == "gate" else object.sprite.size.x * 0.5)
+		object.sprite.position.x = object.event.x * b.px_per_m - camera_x - (0.0 if object.kind == "gate" else object.sprite.size.x * 0.5)
 		object.sprite.visible = object.sprite.position.x > -object.sprite.size.x and object.sprite.position.x < b.layout.screen[0]
 	bridge_gap.position.x = bridge_event.x * b.px_per_m - camera_x
 	bridge.position.x = bridge_gap.position.x
@@ -543,7 +561,12 @@ func update_song() -> void:
 				syllable_labels[index] = label
 		next_line.text = song.lines[(line_index + 1) % song.lines.size()]
 	var part: String = song.syllables[current].part
-	var target_real: float = GameState.balance.song_view.dark_world_real if part == "dark" else (GameState.balance.song_view.rosie_world_real if part == "rosie" else 0.0)
+	# The dream decays line by line: each part ramps the real look from its first to its last line.
+	var ramp: Array = GameState.balance.song_view.part_world_real.get(part, [0.0, 0.0])
+	var first_line := song.line_parts.find(part)
+	var last_line := song.line_parts.rfind(part)
+	var through: float = 0.0 if last_line <= first_line else float(line_index - first_line) / float(last_line - first_line)
+	var target_real: float = lerpf(ramp[0], ramp[1], through)
 	GameState.world_real = move_toward(GameState.world_real, target_real, get_process_delta_time() / GameState.balance.song_view.world_lerp)
 	if line_index != last_song_line:
 		last_song_line = line_index

@@ -4,7 +4,15 @@ extends RefCounted
 var events: Array
 
 func _init(data: Dictionary) -> void:
-	events = data.events
+	# Own copy: the chase can be shifted at runtime (see shift_from) without touching GameState.level.
+	events = data.events.duplicate(true)
+
+# Move every event at or beyond `from_x` by `offset` metres and keep the list ordered.
+func shift_from(from_x: float, offset: float) -> void:
+	for event in events:
+		if event.x >= from_x:
+			event.x += offset
+	events.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return a.x < b.x)
 
 func first(kind: String) -> Dictionary:
 	for event in events:

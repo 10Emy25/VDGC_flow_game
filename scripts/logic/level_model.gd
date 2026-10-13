@@ -30,6 +30,8 @@ var messages: Array[Dictionary] = []
 var song_end := INF
 var slammed := false
 var holding := false
+var level_offset := 0.0
+var still_s := 0.0
 # Face walls: x -> shout progress (seconds); broken walls are listed in walls_broken.
 var wall_progress: Dictionary = {}
 var walls_broken: Dictionary = {}
@@ -120,10 +122,17 @@ func step_once(delta: float, target: float, shouting: bool, audible: bool, tier:
 	elif section == "S5" and status == "running":
 		step_finale(shouting)
 	was_shouting = shouting
+	if run.x > old_x + 0.0005 or hidden or status != "running":
+		still_s = 0.0
+	else:
+		still_s += delta
 
 func process_events() -> void:
 	while cursor < level.events.size() and level.events[cursor].x <= run.x:
 		var event: Dictionary = level.events[cursor]
+		# Nothing of the chase happens until the song is cut (the face slam moves it to start there).
+		if not slammed and song_end < INF and event.x >= chase_start_x():
+			break
 		cursor += 1
 		match event.type:
 			"section":
@@ -150,31 +159,41 @@ func process_events() -> void:
 				finish_run()
 		# song_cut, face_slam, scare decorations: R3 presentation hooks, not played in R2.
 
+func chase_start_x() -> float:
+	for event in level.of_type("section"):
+		if event.id == "S2":
+			return event.x
+	return INF
+
 func stop_run() -> void:
 	run.speed = 0.0
 	run.acceleration_rate = 0.0
 
 func step_song(_delta: float) -> void:
 	holding = false
-	if section != "S1" or slammed:
-		return
-	var hold := level.first("song_hold")
-	if not hold.is_empty() and run.x >= hold.x:
-		run.x = hold.x
-		stop_run()
-		holding = true
-	if clock >= song_end:
+	if section == "S1" and not slammed and clock >= song_end:
 		face_slam()
 
+# The chase starts wherever Mina is when the song is cut: everything from S2 on is shifted to begin here,
+# so fast singers never wait and slow singers are never rushed.
 func face_slam() -> void:
 	slammed = true
 	holding = false
 	bridge_ready = true
 	bridge_progress = 1.0
 	bridge_waiting = false
+	var s2: Dictionary = {}
+	for event in level.of_type("section"):
+		if event.id == "S2":
+			s2 = event
+	level_offset = run.x - s2.x
+	level.shift_from(s2.x, level_offset)
+	cursor = 0
+	while cursor < level.events.size() and level.events[cursor].x <= run.x:
+		cursor += 1
 	section = "S2"
 	seen_scares["face_slam"] = true
-	messages.append({"type": "face_slam"})
+	messages.append({"type": "face_slam", "offset": level_offset})
 	messages.append({"type": "section", "id": "S2"})
 	director.spawn()
 	run.scripted_scare()
