@@ -42,6 +42,7 @@ var plank_over_s := 0.0
 var slip_left := 0.0
 var slip_x := 0.0
 var magnet := false
+var shouting_now := false
 
 func _init(config: Dictionary, data: Dictionary, song_data: Dictionary = {}) -> void:
 	balance = config
@@ -81,6 +82,7 @@ func step_once(delta: float, target: float, shouting: bool, audible: bool, tier:
 			messages.append({"type": "ending"})
 		return
 	var old_x := run.x
+	shouting_now = shouting
 	run.step(delta, target, shouting)
 	var bridge: Dictionary = level.first("bridge")
 	bridge_waiting = not bridge_ready and run.x >= bridge.x
@@ -148,7 +150,7 @@ func process_events() -> void:
 				if section == "S2" and not director.active:
 					director.spawn()
 			"gate":
-				var action := run.enter_gate(event.x)
+				var action := run.enter_gate(event.x, shouting_now)
 				messages.append({"type": action})
 			"gaze":
 				director.request_gaze(event, clock)

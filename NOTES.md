@@ -95,3 +95,8 @@ New placeholders come from `tools/generate_r25.py` (never overwrites PNGs). Rend
 - First gate moved to 245 (45 m after the slam) and spawn grace 2 s so the first seconds of the chase are survivable.
 - **Loop bug fixed (R2.6.1).** `Sfx` set `loop_end` from `stream.data.size()`, which is the *compressed* size for QOA-imported WAVs, so every music loop jumped back early (the song after ~13.6 s, wiping the lyrics back to line 1). It now uses the decoded length; `run_model_test` checks it. Song shortened to 19.2 s, bridge moved to 20 m, tutorial timings shortened to fit.
 - **Eye after respawn (R2.6.2).** Respawn's 10 s "no scare" protection also postponed gazes. Reaching an eye trigger within 10 s of respawning (CP2 → first eye is ~4 s at shout speed) made the eye open seconds later, away from its cover, so hiding was impossible. Gazes are level events now and are not postponed by it. Safety net: a gaze that has not started is dropped if Mina is already past its cover. `level_model_test` respawns before every eye at shout speed and checks Mina can hide.
+
+## Tester mode and gap jumps (R2.6.3)
+
+- **Tester mode** (`scripts/dev/tester_mode.gd`, debug builds only): `1`–`5` jump to S1–S5 from anywhere, `6` next checkpoint, `7` god mode, `8` skip the song to 3 s before the slam, `0` hide the overlay. **Remove it by deleting `scripts/dev/`**; `main.gd` only loads it if the file exists, and `tests/tester_mode_test` then passes trivially.
+- **Gap jumps with the keyboard.** Holding Space > ~4 s triggered the throat guard (cap 5 m/s < 6 m/s needed), so "shouting" still stumbled. The guard is off in keyboard mode, its cap is now 6.2 m/s for real voices, and shouting at the edge jumps from ≥ 4.5 m/s (`speed_gate.assist_speed`).

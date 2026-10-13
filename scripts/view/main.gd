@@ -25,6 +25,11 @@ func _ready() -> void:
 	mic_warning = UIFactory.label(hud_layer, "mic_missing", Rect2(590, 870, 1270, 45), GameState.balance.ui.small_size)
 	mic_warning.process_mode = Node.PROCESS_MODE_ALWAYS
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	# Tester mode (debug builds only). Delete scripts/dev/ to remove it; this line then does nothing.
+	if OS.is_debug_build() and ResourceLoader.exists("res://scripts/dev/tester_mode.gd"):
+		var tester: Node = load("res://scripts/dev/tester_mode.gd").new()
+		tester.set("main", self)
+		add_child(tester)
 	show_warning()
 
 func _process(_delta: float) -> void:

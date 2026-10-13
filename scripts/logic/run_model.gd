@@ -16,11 +16,14 @@ var gate_state := ""
 var gate_left := 0.0
 var gate_x := 0.0
 var jump_progress := 0.0
+# Vocal-health guard; the view turns it off in keyboard mode (holding Space is not a throat).
+var guard_enabled := true
 
-func enter_gate(edge: float) -> String:
+func enter_gate(edge: float, shouting: bool = false) -> String:
 	gate_x = edge
 	x = edge
-	if speed >= balance.speed_gate.min_speed:
+	# Shouting at the edge always jumps once Mina is moving at a jog or faster.
+	if speed >= balance.speed_gate.min_speed or (shouting and speed >= balance.speed_gate.assist_speed):
 		gate_state = "jumping"
 		gate_left = balance.speed_gate.jump_s
 		jump_progress = 0.0
@@ -42,7 +45,7 @@ func step(delta: float, target: float, shouting: bool) -> void:
 	if shouting:
 		shouting_s += delta
 		quiet_s = 0.0
-		if shouting_s >= balance.throat_guard.after_s:
+		if guard_enabled and shouting_s >= balance.throat_guard.after_s:
 			guarded = true
 	else:
 		quiet_s += delta

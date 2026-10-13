@@ -23,7 +23,7 @@ func _ready() -> void:
 	for index in range(20):
 		run.step(0.01, 7, true)
 	check(run.guarded, "Throat guard on after 3 seconds")
-	near(run.previous_target, 5, "Guard caps target at 5")
+	near(run.previous_target, 6.2, "Guard caps target at 6.2")
 	run.step(0.49, 0, false)
 	check(run.guarded, "Guard remains during short breath")
 	run.step(0.02, 0, false)
@@ -66,6 +66,20 @@ func _ready() -> void:
 	for loop_key in ["mus_song", "mus_pad", "mus_drums", "mus_heart"]:
 		var loop_stream: AudioStreamWAV = Sfx.get_stream(loop_key)
 		check(abs(loop_stream.loop_end - roundi(loop_stream.get_length() * loop_stream.mix_rate)) <= 1, "%s loops at its real end even when imported compressed" % loop_key)
+	run = RunModel.new(b)
+	for i in range(360): run.step(1.0 / 60.0, 7, true)
+	check(run.guarded and run.speed >= 6.0, "Six seconds of shouting: guard on but still fast enough to jump (%.2f)" % run.speed)
+	check(run.enter_gate(run.x) == "jumping", "Guarded voice still clears a gap")
+	run = RunModel.new(b)
+	run.guard_enabled = false
+	for i in range(360): run.step(1.0 / 60.0, 7, true)
+	check(not run.guarded and is_equal_approx(run.speed, 7), "Keyboard mode: holding Space never triggers the throat guard")
+	run = RunModel.new(b)
+	run.speed = 4.6
+	check(run.enter_gate(10, true) == "jumping", "Shouting at the edge from a jog jumps")
+	run = RunModel.new(b)
+	run.speed = 4.6
+	check(run.enter_gate(10, false) == "stumbling", "Arriving quietly at a jog stumbles")
 	run = RunModel.new(b)
 	run.speed = 6
 	check(run.enter_gate(470) == "jumping", "Exact gate threshold auto-jumps")

@@ -18,7 +18,7 @@
   "decel_half_life_s": 1.0,
   "throat_guard": {
     "after_s": 3.0,
-    "cap": 5.0,
+    "cap": 6.2,
     "reset_s": 0.5
   },
   "instinct_bonus": {
@@ -32,7 +32,8 @@
     "width_m": 2,
     "jump_s": 0.6,
     "climb_s": 0.6,
-    "jump_height_px": 160
+    "jump_height_px": 160,
+    "assist_speed": 4.5
   },
   "m1": {
     "base_speed": {

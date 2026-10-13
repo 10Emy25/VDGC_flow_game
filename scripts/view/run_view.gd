@@ -253,6 +253,7 @@ func _process(delta: float) -> void:
 	var tier_index: int = ["QUIET", "HUM", "TALK", "SHOUT"].find(VoiceInput.tier)
 	if state.section == "S1":
 		tutorial.step(delta, tier_index)
+	model.guard_enabled = not GameState.settings.keyboard_mode
 	state.step(delta, VoiceInput.speed_target, VoiceInput.is_shouting, VoiceInput.is_audible, tier_index, BeatClock.elapsed)
 	for message in state.messages:
 		handle_message(message)
