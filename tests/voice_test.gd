@@ -1,0 +1,56 @@
+extends MinaTestSuite
+
+func _ready() -> void:
+	var b := GameState.balance
+	var voice := VoiceModel.new(b)
+	var t := voice.thresholds()
+	near(t[0], -44, "Hum threshold")
+	near(t[1], -32, "Talk threshold")
+	near(t[2], -23, "Raised-voice threshold is halfway, below full call")
+	near(voice.sample(t[0] - 0.01).speed_target, 0, "Below hum stops")
+	near(voice.sample(t[0]).speed_target, 1.5, "Hum anchor")
+	near(voice.sample(t[1]).speed_target, 3, "Talk anchor")
+	near(voice.sample(t[2]).speed_target, 7, "Shout anchor")
+	near(voice.sample((t[0] + t[1]) * 0.5).speed_target, 2.25, "Hum-talk midpoint")
+	near(voice.sample((t[1] + t[2]) * 0.5).speed_target, 5, "Talk-shout midpoint")
+	near(voice.sample(0).speed_target, 7, "Louder gives nothing extra")
+	check(voice.sample(t[0]).is_audible and voice.sample(t[2]).is_shouting, "Inclusive audible/shout boundaries")
+	check(voice.sample(t[0]).tier == "HUM" and voice.sample(t[1]).tier == "TALK" and voice.sample(t[2]).tier == "SHOUT", "Tiers at anchors")
+	near(voice.sample(-50).level01, 0, "Meter floor")
+	near(voice.sample(-14).level01, 1, "Meter calibrated peak")
+	near(voice.sample(-120).level01, 0, "Meter clamps silence")
+	voice.sensitivity_db = -10
+	for index in range(3):
+		near(voice.thresholds()[index], t[index] - 10, "Negative sensitivity makes threshold easier")
+	near(voice.sample(t[2] - 10).speed_target, 7, "Sensitivity affects mapping")
+	voice.sensitivity_db = 10
+	for index in range(3):
+		near(voice.thresholds()[index], t[index] + 10, "Positive sensitivity shifts thresholds")
+	for offset in [-10.0, 0.0, 10.0]:
+		voice.sensitivity_db = offset
+		check(voice.sample(voice.keyboard_db(false, false, false)).tier == "QUIET", "Keyboard silence stays quiet")
+		check(voice.sample(voice.keyboard_db(false, false, true)).tier == "HUM", "Keyboard Shift hum")
+		check(voice.sample(voice.keyboard_db(false, true, true)).tier == "TALK", "Ctrl takes priority over Shift")
+		check(voice.sample(voice.keyboard_db(true, true, true)).tier == "SHOUT", "Space takes priority")
+		near(voice.keyboard_db(true, false, false), voice.thresholds()[2] + 1, "Synthetic db threshold + 1")
+	near(voice.rms_db(PackedVector2Array([Vector2(0.5, 0.5), Vector2(0.5, 0.5)])), -6.0206, "Stereo RMS conversion")
+	near(voice.rms_db(PackedVector2Array()), -120, "Empty capture floor")
+	near(voice.smooth(-60, -20, b.voice.attack_s), -60 + 40 * (1 - exp(-1)), "Attack one-pole time constant")
+	near(voice.smooth(-20, -60, b.voice.release_s), -20 - 40 * (1 - exp(-1)), "Release one-pole time constant")
+	var cal := Calibration.new(b)
+	var defaults := cal.defaults()
+	near(defaults.floor_db, -50, "Skipped floor")
+	near(defaults.talk_db, -32, "Skipped talk")
+	near(defaults.cal_shout_db, -14, "Skipped call")
+	var result := cal.evaluate([-60.0, -50.0, -55.0, -52.0, -51.0, -56.0, -53.0, -54.0, -59.0, -20.0], [-70.0, -47.0, -42.0, -36.0, -30.0], [-25.0, -10.0, -22.0])
+	near(result.floor_db, -50, "90th percentile rejects one outlier")
+	near(result.talk_db, -30, "70th percentile only audible samples")
+	near(result.cal_shout_db, -10, "Call uses peak")
+	check(not result.retry, "Valid call needs no retry")
+	result = cal.evaluate([-50.0], [-60.0, -44.0], [-48.0])
+	near(result.talk_db, -40, "Talk guard runs first")
+	near(result.cal_shout_db, -28, "Call guard uses guarded talk")
+	check(result.retry, "Quiet call requests retry")
+	result = cal.evaluate([-50.0], [-35.0], [-27.0])
+	check(not result.retry, "Exactly 8 dB call margin is accepted")
+	finish()

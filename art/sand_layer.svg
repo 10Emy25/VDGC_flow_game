@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1070" height="530" viewBox="0 0 1070 530"><defs>
+      <linearGradient id="sand" x2="0.2" y2="1"><stop stop-color="#e8d8ae"/><stop offset="1" stop-color="#baa57b"/></linearGradient>
+      <linearGradient id="wood" x2="0.8" y2="1"><stop stop-color="#a98561"/><stop offset="1" stop-color="#665343"/></linearGradient>
+      <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#c2dddf"/><stop offset="1" stop-color="#fff2db"/></linearGradient>
+      <pattern id="hatch" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M-3 12L12-3M3 15L15 3" stroke="#172322" opacity=".2" stroke-width="1"/></pattern>
+      <pattern id="grain" width="17" height="19" patternUnits="userSpaceOnUse"><circle cx="3" cy="5" r="1" fill="#51472e" opacity=".16"/><circle cx="12" cy="14" r=".8" fill="#fff5d7" opacity=".65"/></pattern>
+    </defs><rect width="1070" height="530" rx="18" fill="url(#sand)"/>
+ <path d="M65 130Q322 160 516 129T960 128M125 387Q363 365 539 398T1000 372" stroke="#f1e4c0" stroke-width="3" fill="none"/>
+ <ellipse cx="540" cy="267" rx="98" ry="89" fill="#d4c294" opacity=".7"/>
+ <path d="M452 266Q515 190 618 245" stroke="#f6e8c8" stroke-width="4" fill="none" opacity=".75"/>
+ <rect width="1070" height="530" fill="url(#grain)"/></svg>

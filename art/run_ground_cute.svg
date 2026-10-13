@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="220" viewBox="0 0 512 220"><defs>
+      <linearGradient id="sand" x2="0.2" y2="1"><stop stop-color="#e8d8ae"/><stop offset="1" stop-color="#baa57b"/></linearGradient>
+      <linearGradient id="wood" x2="0.8" y2="1"><stop stop-color="#a98561"/><stop offset="1" stop-color="#665343"/></linearGradient>
+      <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#c2dddf"/><stop offset="1" stop-color="#fff2db"/></linearGradient>
+      <pattern id="hatch" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M-3 12L12-3M3 15L15 3" stroke="#172322" opacity=".2" stroke-width="1"/></pattern>
+      <pattern id="grain" width="17" height="19" patternUnits="userSpaceOnUse"><circle cx="3" cy="5" r="1" fill="#51472e" opacity=".16"/><circle cx="12" cy="14" r=".8" fill="#fff5d7" opacity=".65"/></pattern>
+    </defs><path d="M0 8Q120 0 256 8T512 8V220H0Z" fill="#e5d3a1"/>
+      <path d="M0 16Q120 8 256 16T512 16" stroke="#6c947c" stroke-width="14" fill="none"/>
+      <path d="M0 60Q150 50 256 63T512 60M0 130Q150 118 256 132T512 130" stroke="#c8b689" stroke-width="3" fill="none"/>
+      <rect y="16" width="512" height="204" fill="url(#grain)"/></svg>

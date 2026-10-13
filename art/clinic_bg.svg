@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080"><defs>
+      <linearGradient id="sand" x2="0.2" y2="1"><stop stop-color="#e8d8ae"/><stop offset="1" stop-color="#baa57b"/></linearGradient>
+      <linearGradient id="wood" x2="0.8" y2="1"><stop stop-color="#a98561"/><stop offset="1" stop-color="#665343"/></linearGradient>
+      <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#c2dddf"/><stop offset="1" stop-color="#fff2db"/></linearGradient>
+      <pattern id="hatch" width="12" height="12" patternUnits="userSpaceOnUse"><path d="M-3 12L12-3M3 15L15 3" stroke="#172322" opacity=".2" stroke-width="1"/></pattern>
+      <pattern id="grain" width="17" height="19" patternUnits="userSpaceOnUse"><circle cx="3" cy="5" r="1" fill="#51472e" opacity=".16"/><circle cx="12" cy="14" r=".8" fill="#fff5d7" opacity=".65"/></pattern>
+    </defs><rect width="1920" height="1080" fill="#deded0"/>
+ <path d="M0 0H1920V250H0Z" fill="#cbd0c3"/><path d="M0 265H1920" stroke="#9ba99c" stroke-width="3"/>
+ <rect x="140" y="52" width="430" height="140" rx="14" fill="#a5b8b0" stroke="#7c948a" stroke-width="6"/>
+ <path d="M352 52V192M140 121H570" stroke="#dbe5d9" stroke-width="12"/>
+ <ellipse cx="1650" cy="177" rx="90" ry="30" fill="#959e83"/>
+ <path d="M1648 181Q1510 24 1575 60Q1620 74 1648 167M1650 177Q1767 20 1740 66Q1748 102 1650 165" fill="#859f83" stroke="#6d886d" stroke-width="6"/>
+ <rect x="150" y="207" width="1620" height="672" rx="100" fill="#647468" opacity=".16"/>
+ <rect x="140" y="188" width="1640" height="668" rx="96" fill="#c4baa0" stroke="#aaa18c" stroke-width="6"/>
+ <path d="M190 799H1740" stroke="#9d947c" stroke-width="4"/>
+ <path d="M198 266Q273 247 346 265M1570 672Q1645 689 1708 670" stroke="#e4d9bf" stroke-width="6"/>
+ <rect x="190" y="390" width="125" height="203" rx="22" fill="#eee6d2" stroke="#a89e89" stroke-width="5"/>
+ <ellipse cx="253" cy="440" rx="42" ry="19" fill="#a89e89"/><ellipse cx="253" cy="437" rx="32" ry="11" fill="#d5c3a3"/>
+ <path d="M1590 459L1685 631" stroke="#6c8c83" stroke-width="16" stroke-linecap="round"/>
+ <path d="M1625 456L1690 620" stroke="#e3dbc6" stroke-width="7" stroke-linecap="round"/>
+ <rect width="1920" height="1080" fill="url(#grain)" opacity=".25"/></svg>

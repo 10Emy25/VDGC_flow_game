@@ -1,0 +1,22 @@
+{
+  "events": [
+    {
+      "x": 0,
+      "type": "section",
+      "id": "S1"
+    },
+    {
+      "x": 0,
+      "type": "tutorial"
+    },
+    {
+      "x": 88,
+      "type": "bridge",
+      "length_m": 12
+    },
+    {
+      "x": 220,
+      "type": "r1_end"
+    }
+  ]
+}

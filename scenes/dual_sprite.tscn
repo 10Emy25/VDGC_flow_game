@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/view/dual_sprite.gd" id="1"]
+
+[node name="DualSprite" type="Control"]
+offset_right = 300.0
+offset_bottom = 360.0
+mouse_filter = 2
+script = ExtResource("1")
+base_key = "mina_idle"

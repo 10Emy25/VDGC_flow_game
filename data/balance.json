@@ -1,0 +1,311 @@
+{
+  "bar_s": 2.4,
+  "px_per_m": 80,
+  "player_screen_x": 760,
+  "calibration_defaults": {
+    "floor_db": -50,
+    "talk_db": -32,
+    "cal_shout_db": -14
+  },
+  "hum_offset_db": 6,
+  "shout_fraction": 0.5,
+  "speeds": {
+    "hum": 1.5,
+    "talk": 3.0,
+    "shout": 7.0
+  },
+  "accel_s": 0.3,
+  "decel_half_life_s": 1.0,
+  "throat_guard": {
+    "after_s": 3.0,
+    "cap": 5.0,
+    "reset_s": 0.5
+  },
+  "instinct_bonus": {
+    "window_s": 1.5,
+    "mult": 1.3,
+    "duration_s": 2.0
+  },
+  "speed_gate": {
+    "min_speed": 6.0,
+    "stumble_s": 1.5,
+    "width_m": 2
+  },
+  "m1": {
+    "base_speed": {
+      "S2": 3.8,
+      "S3": 3.8,
+      "S4": 4.2,
+      "S5": 3.0
+    },
+    "spawn_gap": 10,
+    "spawn_grace_s": 1.5,
+    "respawn_gap": 12,
+    "far_gap": 18,
+    "far_speed": 6.0,
+    "near_gap": 4,
+    "near_mult": 0.75,
+    "gaze_speed": 0.8,
+    "post_gaze_slow_s": 1.5
+  },
+  "m2": {
+    "warning_bars": 1,
+    "recede_bars": 0.5,
+    "beam_half_range_m": 10,
+    "beam_speed": 4.0,
+    "sight_s": 0.8,
+    "hear_s": 0.25,
+    "slam_offset_m": 2.0,
+    "max_cover_distance_m": 12,
+    "safety_margin_m": 4
+  },
+  "safe_zone": {
+    "half_width_m": 3,
+    "hold_s": 6,
+    "hold_s_over_budget": 10
+  },
+  "cover_half_width_m": 0.8,
+  "hide_speed": 0.5,
+  "respawn": {
+    "invuln_s": 3,
+    "no_scare_s": 10,
+    "capture_anim_s": 1.2
+  },
+  "finale": {
+    "window_early_s": 0.3,
+    "window_late_s": 0.6,
+    "surge_m": 12,
+    "hits": 4,
+    "min_gap": 3
+  },
+  "scream_budget_s": {
+    "S2": 30,
+    "S3": 22,
+    "S4": 22,
+    "S5": 6
+  },
+  "flow": {
+    "per_bar": 4,
+    "slam": -15,
+    "stumble": -10
+  },
+  "scares": {
+    "s1_flash": true,
+    "face_slam": true,
+    "eye_first": true,
+    "roar_after_gaze": true,
+    "hold_breath": true,
+    "false_safe": false
+  },
+  "strong_scare_limit": 4,
+  "scare_min_gap_s": 45,
+  "sand": {
+    "brush_radius_px": 38,
+    "reveal_target": 0.7,
+    "transition_s": 2.5,
+    "sound_interval_s": 0.12
+  },
+  "art_frames": {
+    "mina_idle": 2,
+    "mina_walk": 6,
+    "mina_jog": 6,
+    "mina_run": 6,
+    "mina_crouch": 1,
+    "mina_caught": 4,
+    "m1_wall": 4
+  },
+  "voice": {
+    "attack_s": 0.05,
+    "release_s": 0.15,
+    "min_rms": 1e-06,
+    "missing_db": -110,
+    "missing_s": 3,
+    "keyboard_offset_db": 1,
+    "quiet_margin_db": 8
+  },
+  "calibration": {
+    "window_s": 3,
+    "floor_percentile": 0.9,
+    "talk_percentile": 0.7,
+    "talk_margin_db": 6,
+    "talk_fallback_db": 10,
+    "shout_margin_db": 8,
+    "shout_fallback_db": 12,
+    "max_retries": 1
+  },
+  "input_defaults": {
+    "keyboard_mode": false,
+    "sensitivity_db": 0,
+    "show_voice_meter": true,
+    "reduce_distortion": false,
+    "reduce_scares": false
+  },
+  "sensitivity": {
+    "min_db": -10,
+    "max_db": 10,
+    "step_db": 1
+  },
+  "tutorial": [
+    {
+      "key": "hum_walk",
+      "tier": 1,
+      "hold_s": 2,
+      "min_s": 4
+    },
+    {
+      "key": "sing_jog",
+      "tier": 2,
+      "hold_s": 2,
+      "min_s": 4
+    },
+    {
+      "key": "shout_run",
+      "tier": 3,
+      "hold_s": 1,
+      "min_s": 4
+    },
+    {
+      "key": "sing_along",
+      "tier": 0,
+      "hold_s": 0,
+      "min_s": 6
+    }
+  ],
+  "s1": {
+    "bridge_bars": 1,
+    "walk_max": 2.2,
+    "jog_max": 5,
+    "animation_base_fps": 3,
+    "animation_speed_fps": 1.5,
+    "decor_seed": 1852,
+    "decor_spacing_m": 2.7,
+    "bloom_life_s": 7,
+    "idle_speed_epsilon": 0.01
+  },
+  "audio": {
+    "default_db": -10,
+    "mic_mute_db": -80,
+    "clinic_db": -26,
+    "clock_db": -25,
+    "song_db": -17,
+    "pad_db": -30,
+    "sand_db": -22,
+    "bloom_db": -20,
+    "bridge_db": -19,
+    "blur_db": -22,
+    "sample_rate": 22050
+  },
+  "layout": {
+    "screen": [
+      1920,
+      1080
+    ],
+    "feet_y": 860,
+    "mina_rect": [
+      300,
+      360
+    ],
+    "tray_rect": [
+      410,
+      210,
+      1100,
+      600
+    ],
+    "sand_rect": [
+      425,
+      225,
+      1070,
+      530
+    ],
+    "mask_size": [
+      535,
+      265
+    ],
+    "doll_rect": [
+      862,
+      410,
+      196,
+      196
+    ],
+    "figure_rect": [
+      625,
+      310,
+      112,
+      154
+    ],
+    "meter_rect": [
+      48,
+      932,
+      520,
+      70
+    ],
+    "lyrics_rect": [
+      260,
+      44,
+      1400,
+      130
+    ],
+    "subtitle_rect": [
+      260,
+      898,
+      1400,
+      100
+    ],
+    "prompt_rect": [
+      260,
+      188,
+      1400,
+      78
+    ],
+    "settings_rect": [
+      1480,
+      30,
+      392,
+      66
+    ],
+    "settings_panel": [
+      475,
+      145,
+      970,
+      790
+    ],
+    "sand_particle_life_s": 0.75,
+    "sand_particle_count": 4,
+    "particle_rise_px": 110,
+    "pulse_hz": 1.5
+  },
+  "ui": {
+    "body_size": 28,
+    "button_size": 30,
+    "system_size": 44,
+    "therapist_size": 36,
+    "title_size": 68,
+    "lyrics_size": 42,
+    "next_lyrics_size": 25,
+    "small_size": 23,
+    "outline_px": 5,
+    "sand_ring_radius": 58
+  },
+  "palette": {
+    "ink": "#283c3c",
+    "cream": "#fff7e5",
+    "warm": "#fff2db",
+    "cool": "#d5edf8",
+    "gold": "#e9ad46",
+    "mint": "#bcdcc6",
+    "quiet": "#122421"
+  },
+  "parallax": {
+    "keys": [
+      "run_bg_far",
+      "run_bg_mid",
+      "run_bg_near"
+    ],
+    "factors": [
+      0.2,
+      0.5,
+      0.8
+    ]
+  },
+  "beats_per_bar": 4
+}
