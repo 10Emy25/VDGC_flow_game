@@ -15,156 +15,189 @@
       "type": "tutorial"
     },
     {
-      "x": 88,
+      "x": 70,
       "type": "bridge",
       "length_m": 12
     },
     {
-      "x": 215,
-      "type": "song_cut"
+      "x": 196,
+      "type": "song_hold"
     },
     {
-      "x": 220,
-      "type": "face_slam"
-    },
-    {
-      "x": 220,
+      "x": 200,
       "type": "section",
       "id": "S2"
     },
     {
-      "x": 222,
-      "type": "checkpoint",
-      "id": "CP1"
-    },
-    {
-      "x": 230,
+      "x": 204,
       "type": "subtitle",
       "voice": "therapist",
       "key": "now_run"
     },
     {
-      "x": 400,
-      "type": "checkpoint",
-      "id": "CP2"
+      "x": 230,
+      "type": "gate"
     },
     {
-      "x": 410,
+      "x": 262,
+      "type": "face_wall"
+    },
+    {
+      "x": 295,
+      "type": "gate"
+    },
+    {
+      "x": 330,
+      "type": "checkpoint",
+      "id": "CP1"
+    },
+    {
+      "x": 338,
       "type": "subtitle",
       "voice": "therapist",
       "key": "breathe"
     },
     {
-      "x": 470,
+      "x": 360,
+      "type": "plank",
+      "length_m": 8
+    },
+    {
+      "x": 390,
+      "type": "face_wall"
+    },
+    {
+      "x": 410,
       "type": "gate"
     },
     {
-      "x": 520,
-      "type": "gate"
-    },
-    {
-      "x": 560,
+      "x": 420,
       "type": "section",
       "id": "S3"
     },
     {
-      "x": 560,
+      "x": 420,
       "type": "checkpoint",
-      "id": "CP3"
+      "id": "CP2"
     },
     {
-      "x": 590,
+      "x": 450,
       "type": "gaze",
       "bars": 2,
       "scripted_first": true,
       "subtitle": "hide_still"
     },
     {
-      "x": 600,
+      "x": 458,
       "type": "cover",
       "art": "cover_flower_big"
     },
     {
-      "x": 670,
+      "x": 490,
+      "type": "face_wall"
+    },
+    {
+      "x": 515,
+      "type": "gate"
+    },
+    {
+      "x": 540,
       "type": "gaze",
       "bars": 2
     },
     {
-      "x": 680,
+      "x": 548,
       "type": "cover",
       "art": "cover_flower_big"
     },
     {
-      "x": 700,
-      "type": "checkpoint",
-      "id": "CP4"
+      "x": 575,
+      "type": "plank",
+      "length_m": 8
     },
     {
-      "x": 760,
+      "x": 600,
+      "type": "checkpoint",
+      "id": "CP3"
+    },
+    {
+      "x": 622,
       "type": "gate"
     },
     {
-      "x": 820,
+      "x": 640,
       "type": "section",
       "id": "S4"
     },
     {
-      "x": 820,
+      "x": 640,
       "type": "checkpoint",
-      "id": "CP5"
+      "id": "CP4"
     },
     {
-      "x": 850,
+      "x": 665,
+      "type": "face_wall"
+    },
+    {
+      "x": 690,
       "type": "gaze",
       "bars": 3
     },
     {
-      "x": 860,
+      "x": 698,
       "type": "cover",
       "art": "cover_desk"
     },
     {
-      "x": 900,
+      "x": 725,
       "type": "gate"
     },
     {
-      "x": 960,
+      "x": 745,
+      "type": "plank",
+      "length_m": 8
+    },
+    {
+      "x": 770,
       "type": "checkpoint",
-      "id": "CP6",
-      "respawn_gap": 15,
+      "id": "CP5",
       "scare": "false_safe"
     },
     {
-      "x": 990,
+      "x": 795,
       "type": "gaze",
       "bars": 3,
       "scare": "hold_breath"
     },
     {
-      "x": 1000,
+      "x": 803,
       "type": "cover",
       "art": "cover_locker"
     },
     {
-      "x": 1050,
+      "x": 830,
+      "type": "face_wall"
+    },
+    {
+      "x": 852,
       "type": "gate"
     },
     {
-      "x": 1080,
+      "x": 880,
       "type": "section",
       "id": "S5"
     },
     {
-      "x": 1080,
+      "x": 880,
       "type": "checkpoint",
-      "id": "CP7"
+      "id": "CP6"
     },
     {
-      "x": 1080,
+      "x": 880,
       "type": "finale"
     },
     {
-      "x": 1140,
+      "x": 940,
       "type": "door"
     }
   ]

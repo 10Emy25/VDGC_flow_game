@@ -13,7 +13,7 @@ func _ready() -> void:
 	main.show_run()
 	run = main.current_view
 	run.process_mode = Node.PROCESS_MODE_DISABLED
-	place(280)
+	place(345)
 	var original_cal := [VoiceInput.model.floor_db, VoiceInput.model.talk_db, VoiceInput.model.cal_shout_db]
 	VoiceInput.set_calibration(-50, -40, -28, false)
 	VoiceInput.model.sensitivity_db = -10
@@ -27,9 +27,9 @@ func _ready() -> void:
 	advance(1.22)
 	check(run.overlay.visible and run.state.status == "fading", "Capture fades to black")
 	advance(.52)
-	check(run.state.status == "running" and run.model.x == 222, "View returns to CP1")
+	check(run.state.status == "running" and run.model.x == 330, "View returns to CP1")
 	check(run.state.director.invulnerable_left > 2.9, "View respawn protection")
-	place(600)
+	place(458)
 	run.state.director.phase = "GAZE"
 	run.state.director.phase_start = 0
 	run.state.director.phase_end = 100
@@ -45,23 +45,23 @@ func _ready() -> void:
 	advance(.26)
 	check(run.state.status == "captured" and run.state.director.capture_cause == "hearing", "Second keyboard sound captures")
 	key(KEY_SHIFT, false)
-	place(469.9)
+	place(229.9)
 	run.model.speed = 7
 	key(KEY_SPACE, true)
 	advance(.03)
 	advance(.3)
 	check(run.model.gate_state == "jumping" and run.mina.position.y < 500, "Fast gate draws jump arc")
 	key(KEY_SPACE, false)
-	place(519.9)
+	place(294.9)
 	run.model.speed = 3
 	key(KEY_CTRL, true)
 	advance(.04)
 	check(run.model.gate_state == "stumbling" and run.model.speed == 0, "Slow gate stumbles")
 	key(KEY_CTRL, false)
-	place(400)
+	place(330)
 	advance(.02)
-	check(run.state.safe_id == "CP2" and run.state.director.m1_speed("S2") == 0, "Safe puddle freezes wall")
-	run.model.x = 404
+	check(run.state.safe_id == "CP1" and run.state.director.m1_speed("S2") == 0, "Safe puddle freezes wall")
+	run.model.x = 334
 	advance(.02)
 	check(run.state.director.safe_hold_left > 5.9, "Leaving puddle holds wall")
 	run.process_mode = Node.PROCESS_MODE_PAUSABLE
@@ -74,7 +74,24 @@ func _ready() -> void:
 	check(not run.can_process(), "Run view cannot process during settings")
 	main.settings_panel.close()
 	run.process_mode = Node.PROCESS_MODE_DISABLED
-	place(1084)
+	place(345)
+	run.handle_message({"type":"face_slam"})
+	advance(.05)
+	check(run.slam_face.visible and run.slam_text.visible and run.slam_text.text == "SCREAM!!!", "Face slam shows the face and SCREAM!!!")
+	near(GameState.world_real, 1, "Face slam switches to the real world")
+	advance(2.2)
+	check(not run.slam_face.visible and not run.slam_text.visible, "Face slam clears")
+	check(run.darkness.visible, "Nightmare world is dark around Mina")
+	place(262)
+	run.model.speed = 3
+	advance(.05)
+	check(run.state.wall_waiting == 262 and run.prompt.text == GameState.text("wall_hint"), "Face wall stops Mina and asks for a shout")
+	key(KEY_SPACE, true)
+	advance(.45)
+	advance(.45)
+	key(KEY_SPACE, false)
+	check(run.state.walls_broken.has(262.0) or run.state.walls_broken.has(262), "Shouting breaks the face wall")
+	place(884)
 	GameState.world_real = 1
 	var time_scale := Engine.time_scale
 	for bar in range(1, 5):
@@ -112,7 +129,7 @@ func place(x: float) -> void:
 	run.shake_left = 0.0
 	run.subtitle_left = 0.0
 	run.ring_left = 0.0
-	run.state = LevelModel.new(GameState.balance, GameState.level)
+	run.state = LevelModel.new(GameState.balance, GameState.level, GameState.song)
 	run.model = run.state.run
 	run.level = run.state.level
 	run.model.x = x

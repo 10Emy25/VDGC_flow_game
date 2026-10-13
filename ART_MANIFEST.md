@@ -98,3 +98,13 @@ Original synthesis, replaceable by same-name WAV then OGG. Ambience/music loop; 
 | `sfx_safe` | 1.20 s | no |
 | `sfx_sand` | 0.35 s | no |
 | `sfx_stumble` | 1.00 s | no |
+
+## R2.5 additions
+
+| key | size | dual | frames | used for |
+| --- | --- | --- | --- | --- |
+| `m1_face_closeup` | 1920×1080 | real only | 1 | face slam at the song cut |
+| `face_wall` | 360×760 | real only | 1 | face-wall obstacle (shout or ram to break) |
+| `plank` | 800×140 | yes | 1 | narrow plank over a pit (don't shout) |
+
+Audio: `mus_song` (Twinkle + changed verse + Rosie, 67.2 s, generated from `song.json`), `mus_drums`, `mus_heart`, `sfx_face_slam`, `sfx_m1_growl`, `sfx_wall_break`.

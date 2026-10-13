@@ -36,20 +36,22 @@
   },
   "m1": {
     "base_speed": {
-      "S2": 3.8,
-      "S3": 3.8,
-      "S4": 4.2,
+      "S1": 3.4,
+      "S2": 3.4,
+      "S3": 3.4,
+      "S4": 3.6,
       "S5": 3.0
     },
-    "spawn_gap": 10,
+    "spawn_gap": 8,
     "spawn_grace_s": 1.5,
-    "respawn_gap": 12,
-    "far_gap": 18,
-    "far_speed": 6.0,
-    "near_gap": 4,
-    "near_mult": 0.75,
-    "gaze_speed": 0.8,
-    "post_gaze_slow_s": 1.5
+    "respawn_gap": 8,
+    "gaze_speed": 0.0,
+    "post_gaze_slow_s": 1.0,
+    "safe_gap": 8,
+    "max_gap": 8,
+    "lunge_every_bars": 2,
+    "lunge_m": 3,
+    "lunge_s": 0.5
   },
   "m2": {
     "warning_bars": 1,
@@ -60,13 +62,16 @@
     "hear_s": 0.25,
     "slam_offset_m": 2.0,
     "max_cover_distance_m": 12,
-    "safety_margin_m": 4,
+    "safety_margin_m": 0,
     "tell_bars": 1,
     "first_freeze_s": 2,
     "beam_half_width_m": 1.875,
     "slam_s": 1,
     "slam_shake_px": 16,
-    "shadow_fraction": 0.4
+    "shadow_fraction": 0.4,
+    "magnet_before_m": 7,
+    "magnet_after_m": 3,
+    "magnet_speed": 9
   },
   "safe_zone": {
     "half_width_m": 3,
@@ -222,7 +227,12 @@
     "m1_near_db": -6,
     "m1_far_m": 16,
     "m1_near_m": 2,
-    "reduce_scare_db": -12
+    "reduce_scare_db": -12,
+    "drums_db": -16,
+    "heart_db": -14,
+    "slam_db": -2,
+    "growl_db": -12,
+    "break_db": -12
   },
   "layout": {
     "screen": [
@@ -390,6 +400,14 @@
       "door": [
         500,
         800
+      ],
+      "face_wall": [
+        360,
+        760
+      ],
+      "plank": [
+        80,
+        140
       ]
     },
     "monster_rect": [
@@ -397,10 +415,10 @@
       1080
     ],
     "eye_rect": [
-      660,
-      150,
-      600,
-      300
+      510,
+      20,
+      900,
+      450
     ],
     "crack_rect": [
       0,
@@ -424,9 +442,49 @@
       "S5": 55
     },
     "decor_spacing_m": 4.5,
-    "m1_fps": 8
+    "m1_fps": 8,
+    "cover_glow": 0.45
   },
   "simulation": {
     "max_step_s": 0.02
+  },
+  "obstacles": {
+    "face_wall": {
+      "break_s": 0.8,
+      "ram_speed": 6.0,
+      "width_m": 1.0
+    },
+    "plank": {
+      "max_speed": 5.2,
+      "slip_after_s": 0.3,
+      "slip_s": 1.2
+    }
+  },
+  "slam": {
+    "silence_s": 0.6,
+    "face_s": 0.7,
+    "scale_to": 1.15,
+    "scale_s": 0.4,
+    "shake_px": 24,
+    "shake_s": 0.3,
+    "text_s": 1.6,
+    "text_size": 150,
+    "reduce_fade_s": 0.8
+  },
+  "song_view": {
+    "dark_world_real": 0.22,
+    "rosie_world_real": 0.35,
+    "world_lerp": 1.5,
+    "dark_flash_s": 0.06
+  },
+  "horror": {
+    "darkness": 0.85,
+    "light_radius_px": 340,
+    "light_soft_px": 460,
+    "near_shake_gap": 3.0,
+    "near_shake_px": 7,
+    "lunge_shake_px": 12,
+    "lunge_shake_s": 0.35,
+    "lunge_lurch_px": 60
   }
 }

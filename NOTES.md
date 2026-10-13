@@ -66,3 +66,23 @@ Viewport captures are temporary QA artifacts under `/tmp/mina-r1-tour`, not ship
 6. Listen for melody/lyric synchronization and seamless loops on real audio hardware. Confirm no microphone monitoring. Add a different-size same-name PNG and restart to inspect its actual appearance; automated slot/priority checks pass, but arbitrary production art needs visual review.
 
 Not verified: live microphone permission/capture quality, real-room calibration and comfort, speaker/headphone mix and perception of timing/panning, live mouse feel, arbitrary resize/device combinations, and macOS export entitlements. Scare-reduction behavior has no gameplay effect until scares are built. Headless assertions and rendered snapshots do not substitute for those checks.
+
+---
+
+# R2.5 rework after the first playtest (Claude)
+
+Playtest problems: the wall never caught a talking player (near-gap slowdown 2.85 m/s < TALK 3 m/s) and left the screen when outrun; the eye was skipped by the distance safety rule; long empty stretches; covers were hard to stop at; one childish song; no face slam.
+
+| Area | Change | Data |
+| --- | --- | --- |
+| Wall | Gap clamped to `max_gap` 8 m (always on screen). No near slowdown. Base 3.4 m/s (S4 3.6). Every 2 bars it growls one beat early, then lunges 3 m on the downbeat (roar, lurch, shake). Frozen from TELL until RECEDE ends, then 1 s pause and a roar. | `balance.m1` |
+| Eye | Always opens (gaze distance requirement removed because the wall is frozen). Eye is larger and visibly opens during WARNING. | `balance.m2`, `level_view.eye_rect` |
+| Cover magnet | From TELL to the end of GAZE, a cover within 7 m ahead / 3 m behind pulls Mina in (9 m/s) and holds her; covers glow during TELL/WARNING. | `m2.magnet_*` |
+| Obstacles | `face_wall`: blocks the path; arrive at ≥ 6 m/s to smash through, otherwise shout 0.8 s while the wall closes in. `plank`: above 5.2 m/s for 0.3 s Mina slips and stops 1.2 s. | `balance.obstacles`, `level.json` |
+| Level | 940 m, something every ~25–35 m: 7 gates, 6 face walls, 3 planks, 4 gazes, 7 checkpoints. | `level.json` |
+| Song | Twinkle Twinkle (verse 1), then a changed verse ("I can see just where you are… Don't look back at what you are"), then Ring Around the Rosie, cut before "down". The world slowly tints real during the changed verse with single-frame flashes. The path holds at 196 m until the song ends. | `song.json`, `song_view` |
+| Face slam | At the cut: full-screen `m1_face_closeup`, `sfx_face_slam`, shaking `SCREAM!!!`, world switches to real, wall spawns 8 m behind, chase checkpoint saved where the slam happened. | `balance.slam` |
+| Horror | Darkness with a pool of light around Mina in the real world, tighter and flickering as the wall nears; heartbeat loop speeds up with proximity; chase drums (shout bar / breathe bar) start on an even bar so the accent lines up with lunges. | `balance.horror` |
+
+Simulation (`tests/playthrough`): talking only is caught ~10 s after the slam; a bar-aligned shout/breathe player with up to 0.56 s reaction delay finishes all 8 variations with ~64 s total shouting.
+New placeholders come from `tools/generate_r25.py` (never overwrites PNGs). Rendered check: `tests/r25_tour.tscn` (needs a display).

@@ -4,40 +4,51 @@ func _ready() -> void:
 	var b := GameState.balance
 	var d := MonsterDirector.new(b)
 	d.spawn()
-	near(d.gap, 10, "Spawn gap")
+	near(d.gap, 8, "Spawn gap keeps the wall on screen")
 	near(d.m1_speed("S2"), 0, "Spawn grace freezes wall")
 	d.grace_left = 0
-	d.gap = 10
-	near(d.m1_speed("S2"), 3.8, "S2 base")
-	near(d.m1_speed("S4"), 4.2, "S4 base")
-	d.gap = 19
-	near(d.m1_speed("S2"), 6, "Far rubber band")
-	d.gap = 3.9
-	near(d.m1_speed("S2"), 2.85, "Near slowdown retains exact spec tuning")
-	d.phase = "GAZE"
-	near(d.m1_speed("S4"), .8, "Wall fears gaze")
-	d.scripted_first = true
-	near(d.m1_speed("S3"), 0, "First gaze freezes wall")
-	d.phase = "RECEDE"
-	d.scripted_first = false
-	near(d.m1_speed("S3"), .8, "Recede remains slow")
+	near(d.m1_speed("S2"), 3.4, "S2 base")
+	near(d.m1_speed("S4"), 3.6, "S4 base")
+	d.gap = 2
+	near(d.m1_speed("S2"), 3.4, "No hidden slowdown when close: talking alone gets caught")
+	for phase in ["TELL", "WARNING", "GAZE", "RECEDE"]:
+		d.phase = phase
+		near(d.m1_speed("S4"), 0, "Wall holds still during " + phase)
 	d.phase = "IDLE"
-	d.post_slow_left = 1.5
-	near(d.m1_speed("S3"), .8, "Post-gaze grace")
+	d.post_slow_left = 1
+	near(d.m1_speed("S3"), 0, "Post-gaze pause")
 	d.post_slow_left = 0
-	d.gap = 7.84
-	check(d.gaze_decision(2, false).action == "start", "Exact safety margin starts gaze")
-	d.gap = 7.83
-	check(d.gaze_decision(2, false).action == "delay", "Unsafe first attempt delays")
-	check(d.gaze_decision(2, true).bars == 1, "Second attempt shortens to one bar")
-	d.gap = 5.91
-	check(d.gaze_decision(2, true).action == "skip", "Less than one safe bar skips")
+	d.gap = 0.5
+	check(d.gaze_decision(3, false).action == "start", "The eye always opens: no distance requirement")
+	# Gap is clamped so the wall never leaves the screen.
+	d = MonsterDirector.new(b)
+	d.spawn()
+	d.grace_left = 0
+	d.step(.1, 5, "S2", false, false, false, .1)
+	near(d.gap, 8, "Outrunning the wall is capped at max_gap")
+	# Lunges on every second bar, with a growl one beat before.
+	d = MonsterDirector.new(b)
+	d.spawn()
+	d.grace_left = 0
+	var lunges := 0
+	var tells := 0
+	var gap_before := 0.0
+	for tick in range(1, 1000):
+		var t := tick * .01
+		if tick == 479: gap_before = d.gap
+		d.step(.01, 3.4 * .01, "S2", false, false, false, t)
+		if "lunge" in d.events: lunges += 1
+		if "lunge_tell" in d.events: tells += 1
+		if tick == 540: near(gap_before - d.gap, 3, "A lunge closes 3 m", .05)
+	check(lunges == 2 and tells == 2, "Two lunges and growls in ~10 s (bars 2 and 4): %d/%d" % [lunges, tells])
+	d.phase = "GAZE"
+	check(not d.can_lunge(), "No lunge while the eye is open")
 	d = MonsterDirector.new(b)
 	d.spawn()
 	d.grace_left = 0
 	d.gap = 2
 	d.step(.01, 0, "S2", true, false, false, .01)
-	near(d.gap, 12, "Safe zone maintains minimum gap")
+	near(d.gap, 8, "Safe zone pushes the wall back")
 	near(d.m1_speed("S2"), 0, "Safe zone freezes wall")
 	d.step(.01, 0, "S2", false, false, false, .02)
 	near(d.safe_hold_left, 6, "Leaving zone starts six-second hold")
@@ -64,7 +75,7 @@ func _ready() -> void:
 			check(d.first_freeze_left > 1.9, "First-gaze freeze extends two seconds")
 		if tick == 1081:
 			check(d.phase == "IDLE", "Half-bar Recede ends")
-			check(d.post_slow_left > 1.4, "Post-Recede slow starts")
+			check(d.post_slow_left > .9, "Post-Recede pause starts")
 	d = gaze(b)
 	d.step(.24, 0, "S3", false, true, true, .24)
 	check(d.hearing_count == 0, "Hearing requires continuous quarter-second")
@@ -116,9 +127,10 @@ func _ready() -> void:
 	check(not d.captured and not d.try_capture("hearing"), "Finale cannot capture")
 	var level := LevelData.new(GameState.level)
 	check(level.validation_errors(b).is_empty(), "All specified gazes have nearby cover")
-	check(level.covered(600, .49, b), "Cover at low speed hides automatically")
-	check(not level.covered(600, .5, b), "Hide speed is strict")
-	check(not level.covered(601, 0, b), "Outside cover remains visible")
+	var cover_x: float = level.of_type("cover")[0].x
+	check(level.covered(cover_x, .49, b), "Cover at low speed hides automatically")
+	check(not level.covered(cover_x, .5, b), "Hide speed is strict")
+	check(not level.covered(cover_x + 1, 0, b), "Outside cover remains visible")
 	finish()
 
 func gaze(b: Dictionary) -> MonsterDirector:

@@ -54,12 +54,24 @@ var clear_left := 0.0
 var overlay: ColorRect
 var parallax_x := 0.0
 var last_view_x := 0.0
+# Face slam, darkness, lunges, obstacles.
+var slam_face: TextureRect
+var slam_text: Label
+var slam_age := INF
+var darkness: ColorRect
+var lunge_left := 0.0
+var hint_left := 0.0
+var hint_key := ""
+var walls: Dictionary = {}
+var drums_pending := false
+var last_song_line := -1
+var flash_left := 0.0
 
 func _ready() -> void:
 	theme = GameState.ui_theme
 	GameState.world_real = 0.0
 	PostFX.stress = 0.0
-	state = LevelModel.new(GameState.balance, GameState.level)
+	state = LevelModel.new(GameState.balance, GameState.level, GameState.song)
 	model = state.run
 	level = state.level
 	tutorial = TutorialModel.new(GameState.balance.tutorial)
@@ -90,6 +102,20 @@ func _ready() -> void:
 	bridge = dual("flower_bridge", Rect2(0, 1080, bridge_event.length_m * GameState.balance.px_per_m, 240))
 	for event in level.events:
 		var kind: String = event.type
+		if kind == "face_wall":
+			var wall_dims: Array = GameState.balance.level_view.object_slots.face_wall
+			var face_wall := dual("face_wall", Rect2(0, GameState.balance.layout.feet_y - wall_dims[1], wall_dims[0], wall_dims[1]), true)
+			face_wall.z_index = 3
+			face_wall.pivot_offset = Vector2(wall_dims[0] * 0.5, wall_dims[1])
+			objects.append({"sprite": face_wall, "x": event.x, "kind": kind})
+			walls[event.x] = face_wall
+			continue
+		if kind == "plank":
+			var plank_dims: Array = GameState.balance.level_view.object_slots.plank
+			var plank := dual("plank", Rect2(0, GameState.balance.layout.feet_y - 20, event.length_m * GameState.balance.px_per_m + plank_dims[0], plank_dims[1]))
+			plank.z_index = 1
+			objects.append({"sprite": plank, "x": event.x, "kind": kind})
+			continue
 		if kind not in ["cover", "checkpoint", "gate", "door"]:
 			continue
 		var slots: Dictionary = GameState.balance.level_view.object_slots
@@ -156,6 +182,24 @@ func _ready() -> void:
 	transition_layer.layer = 9
 	add_child(transition_layer)
 	overlay = make_shade(Rect2(0, 0, 1920, 1080), Color.BLACK, transition_layer)
+	darkness = ColorRect.new()
+	darkness.size = Vector2(1920, 1080)
+	darkness.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	darkness.z_index = 10
+	var dark_material := ShaderMaterial.new()
+	dark_material.shader = load("res://shaders/darkness.gdshader")
+	darkness.material = dark_material
+	add_child(darkness)
+	slam_face = UIFactory.texture(transition_layer, "m1_face_closeup", Rect2(0, 0, 1920, 1080))
+	slam_face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	slam_face.pivot_offset = Vector2(960, 540)
+	slam_face.visible = false
+	slam_text = UIFactory.label(transition_layer, "scream_slam", Rect2(0, 380, 1920, 320), int(GameState.balance.slam.text_size), Color("#d81e1e"))
+	slam_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	slam_text.add_theme_color_override("font_outline_color", Color.BLACK)
+	slam_text.add_theme_constant_override("outline_size", 18)
+	slam_text.visible = false
+	BeatClock.bar_started.connect(_on_bar)
 	GameState.settings_changed.connect(refresh_hint)
 	update_view(0.0)
 
@@ -218,10 +262,39 @@ func handle_message(message: Dictionary) -> void:
 	match message.type:
 		"section", "respawn":
 			if state.section != "S1":
-				Sfx.loop("mus_song", false)
-				BeatClock.adopt_master("mus_pad")
+				if Sfx.loops.has("mus_song"):
+					Sfx.loop("mus_song", false)
+					BeatClock.adopt_master("mus_pad")
+				GameState.world_real = 1.0
+				if not Sfx.loops.has("mus_drums"):
+					drums_pending = true
 			else:
 				Sfx.loop("mus_song", true, audio.song_db)
+		"face_slam":
+			slam_age = 0.0
+			if Sfx.loops.has("mus_song"):
+				Sfx.loop("mus_song", false)
+				BeatClock.adopt_master("mus_pad")
+			Sfx.play("sfx_face_slam", audio.slam_db + (audio.reduce_scare_db if GameState.settings.reduce_scares else 0.0))
+			GameState.world_real = 1.0
+			if not GameState.settings.reduce_scares:
+				shake_left = GameState.balance.slam.shake_s
+		"lunge_tell":
+			Sfx.play_at("sfx_m1_growl", audio.growl_db, 1.0, -0.6)
+			show_hint("lunge_hint", GameState.balance.bar_s / GameState.balance.beats_per_bar + 0.4)
+		"lunge":
+			Sfx.play_at("sfx_m1_roar", audio.threat_db, 1.0, -0.6)
+			lunge_left = GameState.balance.m1.lunge_s
+		"wall_break":
+			Sfx.play("sfx_wall_break", audio.break_db)
+			if walls.has(message.x):
+				var broken: Control = walls[message.x]
+				var crumble := create_tween()
+				crumble.tween_property(broken, "scale", Vector2(1.25, 0.2), 0.25)
+				crumble.parallel().tween_property(broken, "modulate:a", 0.0, 0.25)
+		"slip":
+			Sfx.play("sfx_stumble", audio.gate_db)
+			show_hint("slip_hint", 1.2)
 		"subtitle":
 			subtitle.text = GameState.text(message.key)
 			subtitle_left = GameState.balance.level_view.subtitle_s
@@ -243,7 +316,8 @@ func handle_message(message: Dictionary) -> void:
 			Sfx.play("sfx_all_clear", audio.warning_db)
 			clear_left = GameState.balance.bar_s
 		"all_clear": clear_left = GameState.balance.bar_s
-		"capture": Sfx.play("sfx_m2_grab" if state.director.capture_cause == "hearing" else "sfx_capture", audio.capture_db)
+		"capture":
+			Sfx.play("sfx_m2_grab" if state.director.capture_cause == "hearing" else "sfx_capture", audio.capture_db)
 		"beat_call":
 			Sfx.play("sfx_beat_call", audio.beat_db)
 			ring_left = GameState.balance.finale.ring_s
@@ -254,6 +328,76 @@ func handle_message(message: Dictionary) -> void:
 		"ending":
 			finished = true
 			run_finished.emit()
+
+func show_hint(key: String, seconds: float) -> void:
+	hint_key = key
+	hint_left = seconds
+
+# Drums and heartbeat join on an even bar so the accented "shout bar" lines up with the wall's lunges.
+func _on_bar(index: int) -> void:
+	if not drums_pending or index % int(GameState.balance.m1.lunge_every_bars) != 0:
+		return
+	drums_pending = false
+	Sfx.loop("mus_drums", true, GameState.balance.audio.drums_db)
+	Sfx.loop("mus_heart", true, GameState.balance.audio.heart_db)
+
+func update_horror(delta: float) -> void:
+	var b: Dictionary = GameState.balance
+	var d := state.director
+	var h: Dictionary = b.horror
+	# Face slam overlay.
+	if slam_age < INF:
+		slam_age += delta
+		var cfg: Dictionary = b.slam
+		var gentle: bool = GameState.settings.reduce_scares
+		slam_face.visible = slam_age < cfg.face_s + 0.3
+		var fade_in: float = clampf(slam_age / cfg.reduce_fade_s, 0.0, 1.0) if gentle else 1.0
+		var fade_out: float = 1.0 - clampf((slam_age - cfg.face_s) / 0.3, 0.0, 1.0)
+		slam_face.modulate.a = fade_in * fade_out
+		slam_face.scale = Vector2.ONE * lerpf(1.0, cfg.scale_to, clampf(slam_age / cfg.scale_s, 0.0, 1.0))
+		slam_text.visible = slam_age < cfg.text_s
+		slam_text.position = Vector2(0, 380) + (Vector2.ZERO if gentle else Vector2(sin(slam_age * 71.0), cos(slam_age * 53.0)) * 10.0)
+		if slam_age > cfg.text_s + 0.3:
+			slam_age = INF
+			slam_face.visible = false
+			slam_text.visible = false
+	# Darkness: the nightmare world is lit only around Mina; it closes in as the wall gets near.
+	var real: float = GameState.world_real
+	var near: float = clampf(1.0 - d.gap / b.m1.max_gap, 0.0, 1.0) if d.active else 0.0
+	var mat := darkness.material as ShaderMaterial
+	darkness.visible = real > 0.05 and state.section != "S1" or real > 0.3
+	mat.set_shader_parameter("center", Vector2(b.player_screen_x, b.layout.feet_y - 180))
+	mat.set_shader_parameter("radius", h.light_radius_px * (1.0 - near * 0.25) * (1.4 if state.section == "S5" else 1.0))
+	mat.set_shader_parameter("soft", h.light_soft_px)
+	mat.set_shader_parameter("strength", h.darkness * real * (0.5 if not state.safe_id.is_empty() else 1.0))
+	mat.set_shader_parameter("flicker", near)
+	# Lunge: the wall lurches forward and the screen jolts.
+	lunge_left = maxf(0.0, lunge_left - delta)
+	if lunge_left > 0.0:
+		var t: float = 1.0 - lunge_left / b.m1.lunge_s
+		wall.position.x += sin(t * PI) * h.lunge_lurch_px
+		if not GameState.settings.reduce_scares:
+			position += Vector2(sin(state.time * 67.0), cos(state.time * 41.0)) * h.lunge_shake_px * (1.0 - t)
+	elif d.active and d.gap < h.near_shake_gap and state.status == "running" and not GameState.settings.reduce_scares:
+		position += Vector2(sin(state.time * 37.0), cos(state.time * 29.0)) * h.near_shake_px * (1.0 - d.gap / h.near_shake_gap)
+	if Sfx.loops.has("mus_heart"):
+		Sfx.loops["mus_heart"].volume_db = lerpf(b.audio.heart_db - 14.0, b.audio.heart_db, near)
+		Sfx.loops["mus_heart"].pitch_scale = lerpf(0.9, 1.35, near)
+	# Face walls: shudder while being shouted at; reappear after a respawn.
+	for wall_x in walls:
+		var face_wall: Control = walls[wall_x]
+		if not state.walls_broken.has(wall_x):
+			face_wall.scale = Vector2.ONE
+			face_wall.modulate.a = 1.0
+			if state.wall_waiting == wall_x:
+				var progress: float = state.wall_progress.get(wall_x, 0.0) / b.obstacles.face_wall.break_s
+				face_wall.position.x += sin(state.time * 90.0) * 10.0 * progress
+				face_wall.modulate = Color(1.0, 1.0 - progress * 0.5, 1.0 - progress * 0.5)
+	# Covers glow once the sky starts to open.
+	for object in objects:
+		if object.kind == "cover":
+			var glow: float = b.level_view.cover_glow * (0.6 + 0.4 * sin(state.time * 8.0)) if d.phase in ["TELL", "WARNING"] else 0.0
+			object.sprite.modulate = Color(1.0 + glow, 1.0 + glow, 1.0 + glow * 0.6)
 
 func update_view(delta: float) -> void:
 	var b: Dictionary = GameState.balance
@@ -274,8 +418,11 @@ func update_view(delta: float) -> void:
 	if state.status != "running":
 		prompt_key = "capture_hint"
 	elif in_song:
-		prompt_key = "bridge_hint" if bridge_waiting else ("" if tutorial.complete() else tutorial.stages[tutorial.index].key)
+		prompt_key = "hold_hint" if state.holding else ("bridge_hint" if bridge_waiting else ("" if tutorial.complete() else tutorial.stages[tutorial.index].key))
+	elif hint_left > 0.0: prompt_key = hint_key
 	elif state.section == "S5": prompt_key = "finale_hint"
+	elif state.wall_waiting >= 0.0: prompt_key = "wall_hint"
+	elif state.on_plank and d.phase == "IDLE": prompt_key = "plank_hint"
 	elif d.slam_left > 0.0: prompt_key = "slam_hint"
 	elif clear_left > 0.0 and d.phase in ["RECEDE", "IDLE"]: prompt_key = "clear_hint"
 	elif state.hidden: prompt_key = "hidden_hint"
@@ -286,7 +433,8 @@ func update_view(delta: float) -> void:
 	elif clear_left > 0.0: prompt_key = "clear_hint"
 	prompt.text = "" if prompt_key.is_empty() else GameState.text(prompt_key)
 	prompt.visible = not prompt.text.is_empty()
-	meter.pulse_tier = 2 if bridge_waiting else (0 if tutorial.complete() or not in_song else tutorial.stages[tutorial.index].tier)
+	hint_left = maxf(0.0, hint_left - delta)
+	meter.pulse_tier = 3 if state.wall_waiting >= 0.0 else 2 if bridge_waiting else (0 if tutorial.complete() or not in_song else tutorial.stages[tutorial.index].tier)
 	clear_left = maxf(0.0, clear_left - delta)
 	if state.messages.any(func(m: Dictionary) -> bool: return m.type == "respawn"):
 		parallax_x = model.x
@@ -329,7 +477,7 @@ func update_view(delta: float) -> void:
 	crack.visible = d.phase in ["WARNING", "GAZE", "RECEDE"]
 	shade.visible = crack.visible
 	shade.color.a = 0.4
-	eye.visible = d.phase in ["GAZE", "RECEDE"]
+	eye.visible = d.phase in ["WARNING", "GAZE", "RECEDE"]
 	if state.section == "S5":
 		var eye_age: float = state.time - state.finale_start
 		eye.visible = eye_age < b.finale.eye_close_s
@@ -339,8 +487,10 @@ func update_view(delta: float) -> void:
 		eye.scale.y = lerpf(1.0, 0.08, clampf(eye_age / b.finale.eye_close_s, 0.0, 1.0))
 	else:
 		eye.modulate.a = 1.0
-		eye.scale.y = 1.0
-		eye.texture = ArtRegistry.get_texture("m2_eye_closed" if d.phase == "RECEDE" else "m2_eye_open")
+		eye.pivot_offset = eye.size * 0.5
+		var opening: float = clampf((state.clock - d.phase_start) / (d.phase_end - d.phase_start), 0.0, 1.0) if d.phase == "WARNING" else 1.0
+		eye.scale.y = lerpf(0.06, 1.0, opening * opening)
+		eye.texture = ArtRegistry.get_texture("m2_eye_closed" if d.phase == "RECEDE" or opening < 0.35 else "m2_eye_open")
 	beam.visible = d.phase == "GAZE"
 	beam.position.x = b.player_screen_x + d.beam_offset * b.px_per_m - beam.size.x * 0.5
 	hand.visible = d.slam_left > 0.0
@@ -365,6 +515,7 @@ func update_view(delta: float) -> void:
 	beat_ring.scale = Vector2.ONE * lerpf(1.3, 0.8, ring_left / b.finale.ring_s)
 	overlay.visible = state.status in ["fading", "flash"]
 	overlay.color = Color.WHITE if state.status == "flash" else Color(0, 0, 0, clampf(state.status_age / b.respawn.fade_s, 0.0, 1.0))
+	update_horror(delta)
 	PostFX.stress = 0.0 if in_song or not state.safe_id.is_empty() else (b.level_view.gaze_stress if d.phase == "GAZE" else clampf(1.0 - d.gap / b.level_view.chase_stress_gap, 0.0, 1.0))
 
 func update_song() -> void:
@@ -391,7 +542,18 @@ func update_song() -> void:
 				syllable_slot.add_child(label)
 				syllable_labels[index] = label
 		next_line.text = song.lines[(line_index + 1) % song.lines.size()]
-	if VoiceInput.is_audible and not sung.has(current):
+	var part: String = song.syllables[current].part
+	var target_real: float = GameState.balance.song_view.dark_world_real if part == "dark" else (GameState.balance.song_view.rosie_world_real if part == "rosie" else 0.0)
+	GameState.world_real = move_toward(GameState.world_real, target_real, get_process_delta_time() / GameState.balance.song_view.world_lerp)
+	if line_index != last_song_line:
+		last_song_line = line_index
+		# A single-frame glimpse of the real world whenever a changed line begins.
+		if part != "twinkle" and not GameState.settings.reduce_scares:
+			flash_left = GameState.balance.song_view.dark_flash_s
+	if flash_left > 0.0:
+		flash_left -= get_process_delta_time()
+		GameState.world_real = 1.0 if flash_left > 0.0 else target_real
+	if VoiceInput.is_audible and not sung.has(current) and not song.syllables[current].cut:
 		sung[current] = true
 		var flower := dual("flower_bud", Rect2(0, GameState.balance.layout.feet_y - 140, 110, 140))
 		world_props.append({"sprite": flower, "x": model.x, "life": GameState.balance.s1.bloom_life_s})
@@ -405,6 +567,9 @@ func update_song() -> void:
 		Sfx.play("sfx_bloom", GameState.balance.audio.bloom_db)
 		move_child(mina, get_child_count() - 1)
 	for index in syllable_labels:
-		var color := Color(GameState.balance.palette.gold if sung.has(index) else GameState.balance.palette.ink)
+		var ink := Color(GameState.balance.palette.ink)
+		if song.syllables[index].part != "twinkle":
+			ink = Color("#7a1414")
+		var color := Color(GameState.balance.palette.gold) if sung.has(index) else ink
 		syllable_labels[index].add_theme_color_override("font_color", color)
 		syllable_labels[index].modulate.a = 1.0 if current == index or sung.has(index) else 0.5

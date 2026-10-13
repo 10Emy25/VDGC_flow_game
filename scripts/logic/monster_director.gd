@@ -31,6 +31,9 @@ var first_freeze_left := 0.0
 var in_safe := false
 var was_safe := false
 var finale := false
+var lunge_left := 0.0
+var last_lunge_bar := -1
+var last_tell_bar := -1
 var events: Array[String] = []
 
 func _init(config: Dictionary) -> void:
@@ -78,16 +81,39 @@ func m1_speed(section: String) -> float:
 		return 0.0
 	if finale:
 		return balance.m1.base_speed.S5
-	if (phase == "GAZE" and scripted_first) or first_freeze_left > 0.0:
+	if first_freeze_left > 0.0:
 		return 0.0
-	if phase in ["GAZE", "RECEDE"] or post_slow_left > 0.0:
+	if eye_busy() or post_slow_left > 0.0:
 		return balance.m1.gaze_speed
 	var base: float = balance.m1.base_speed.get(section, 0.0)
-	if gap > balance.m1.far_gap:
-		return balance.m1.far_speed
-	if gap < balance.m1.near_gap:
-		return base * balance.m1.near_mult
+	if lunge_left > 0.0:
+		base += balance.m1.lunge_m / balance.m1.lunge_s
 	return base
+
+# The wall fears the eye: it holds still from the first tell until the eye has closed.
+func eye_busy() -> bool:
+	return phase in ["TELL", "WARNING", "GAZE", "RECEDE"]
+
+func can_lunge() -> bool:
+	return active and not finale and not in_safe and not eye_busy() and grace_left <= 0.0 and safe_hold_left <= 0.0 and post_slow_left <= 0.0 and first_freeze_left <= 0.0 and invulnerable_left <= 0.0
+
+# Every N bars the wall roars on the downbeat and lunges forward. One beat earlier it growls.
+func update_lunge(delta: float) -> void:
+	lunge_left = maxf(0.0, lunge_left - delta)
+	var every: int = int(balance.m1.lunge_every_bars)
+	var bar := int(floor(clock / balance.bar_s))
+	var beat_s: float = balance.bar_s / balance.beats_per_bar
+	var tell_bar := int(floor((clock + beat_s) / balance.bar_s))
+	if tell_bar != last_tell_bar and tell_bar % every == 0 and tell_bar > bar:
+		last_tell_bar = tell_bar
+		if can_lunge():
+			events.append("lunge_tell")
+	if bar != last_lunge_bar:
+		last_lunge_bar = bar
+		# A lunge always follows its growl; never an unannounced one.
+		if bar % every == 0 and last_tell_bar == bar and can_lunge():
+			lunge_left = balance.m1.lunge_s
+			events.append("lunge")
 
 func try_capture(cause: String) -> bool:
 	if captured or finale or invulnerable_left > 0.0 or time - last_capture < balance.respawn.min_capture_gap_s:
@@ -110,6 +136,7 @@ func respawn(respawn_gap: float) -> void:
 	safe_hold_left = 0.0
 	post_slow_left = 0.0
 	first_freeze_left = 0.0
+	lunge_left = 0.0
 	was_safe = false
 	reset_hearing()
 	sight_s = 0.0
@@ -137,7 +164,7 @@ func step(delta: float, distance: float, section: String, safe: bool, hidden: bo
 	if captured:
 		return
 	if safe:
-		gap = maxf(gap, balance.m1.respawn_gap)
+		gap = maxf(gap, balance.m1.safe_gap)
 	elif was_safe:
 		safe_hold_left = balance.safe_zone.hold_s
 	was_safe = safe
@@ -145,9 +172,12 @@ func step(delta: float, distance: float, section: String, safe: bool, hidden: bo
 	if active and was_held and safe_hold_left <= 0.0 and post_slow_left <= 0.0 and first_freeze_left <= 0.0 and not safe:
 		events.append("roar")
 	if active:
+		update_lunge(delta)
 		gap += distance - m1_speed(section) * delta
+		# Keep the wall on screen: outrunning it only buys breathing room up to max_gap.
+		gap = minf(gap, balance.m1.max_gap)
 		if safe:
-			gap = maxf(gap, balance.m1.respawn_gap)
+			gap = maxf(gap, balance.m1.safe_gap)
 		if finale:
 			gap = maxf(gap, balance.finale.min_gap)
 		elif gap <= 0.0:
