@@ -25,8 +25,8 @@ func _ready() -> void:
 	run.update_song()
 	await snapshot("01_twinkle")
 	# S1, changed verse.
-	run.model.x = 120
-	BeatClock.elapsed = 30.0
+	run.model.x = 40
+	BeatClock.elapsed = 10.5
 	run.flash_left = 0
 	GameState.world_real = .27
 	advance(.02, false)
@@ -35,7 +35,7 @@ func _ready() -> void:
 	GameState.world_real = .27
 	run.update_view(0)
 	await snapshot("02_dark_verse")
-	BeatClock.elapsed = 45.0
+	BeatClock.elapsed = 16.0
 	GameState.world_real = .55
 	advance(.02, false)
 	run.update_song()

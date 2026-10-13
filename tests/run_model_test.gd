@@ -58,11 +58,14 @@ func _ready() -> void:
 	tutorial.step(6.01, 0)
 	check(tutorial.complete(), "Sing-along auto clears")
 	var song := SongModel.new(GameState.song)
-	near(song.duration, 48, "Verse, changed verse, Rosie; cut before the last word plus 0.6 s silence")
-	check(song.current(0) == 0 and song.current(48) == 0, "Song wraps")
+	near(song.duration, 19.2, "Two normal lines, one changed line, Ashes ashes, cut before 'down' (~20 s)")
+	check(song.current(0) == 0 and song.current(19.2) == 0, "Song wraps")
 	check(song.syllables[song.current(1.2)].text == "twin", "Syllable boundary")
 	check(song.lines[1].count(" ") == 5, "Song joins syllables but separates words")
 	near(Sfx.get_stream("mus_song").get_length(), song.duration, "WAV duration matches karaoke", 0.0001)
+	for loop_key in ["mus_song", "mus_pad", "mus_drums", "mus_heart"]:
+		var loop_stream: AudioStreamWAV = Sfx.get_stream(loop_key)
+		check(abs(loop_stream.loop_end - roundi(loop_stream.get_length() * loop_stream.mix_rate)) <= 1, "%s loops at its real end even when imported compressed" % loop_key)
 	run = RunModel.new(b)
 	run.speed = 6
 	check(run.enter_gate(470) == "jumping", "Exact gate threshold auto-jumps")

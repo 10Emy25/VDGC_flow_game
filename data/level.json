@@ -15,9 +15,9 @@
       "type": "tutorial"
     },
     {
-      "x": 70,
+      "x": 20,
       "type": "bridge",
-      "length_m": 12
+      "length_m": 10
     },
     {
       "x": 200,

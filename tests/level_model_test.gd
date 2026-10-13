@@ -4,14 +4,14 @@ func _ready() -> void:
 	var b := GameState.balance
 	var s := LevelModel.new(b, GameState.level, GameState.song)
 	check(s.section == "S1" and not s.director.active, "No threat in S1")
-	near(s.song_end, 48, "Model knows when the song is cut off")
+	near(s.song_end, 19.2, "Model knows when the song is cut off (~20 s)")
 	place(s, 230, true)
 	s.run.speed = 3
-	s.step(1, 3, false, true, 2, 30)
+	s.step(1, 3, false, true, 2, 10)
 	check(s.section == "S1" and s.run.x > 232, "No waiting at the end of the flower path")
 	var gate_before: float = s.level.first("gate").x
 	var x_at_slam := s.run.x
-	s.step(.02, 3, false, true, 2, 48.01)
+	s.step(.02, 3, false, true, 2, 19.21)
 	check(s.slammed and s.section == "S2" and s.director.active, "Song cut triggers the face slam and the chase")
 	check(s.messages.any(func(m: Dictionary) -> bool: return m.type == "face_slam"), "Face slam message")
 	check(s.checkpoint.event.id == "SLAM" and s.checkpoint.event.section == "S2", "Slam saves a chase checkpoint")
@@ -20,14 +20,15 @@ func _ready() -> void:
 	near(s.director.gap, 8, "Wall appears 8 m behind")
 	# Slow players get slammed wherever they are; respawn keeps them in the chase.
 	s = LevelModel.new(b, GameState.level, GameState.song)
-	place(s, 40)
-	s.step(.02, 0, false, false, 0, 48.1)
+	place(s, 10, true)
+	s.bridge_ready = false
+	s.step(.02, 0, false, false, 0, 19.3)
 	check(s.slammed and s.bridge_ready, "Slam before the bridge lowers it for the chase")
 	s.director.grace_left = 0
 	s.director.gap = -1
-	s.step(.02, 0, false, false, 0, 48.12)
-	s.step(1.8, 0, false, false, 0, 49.9)
-	check(s.status == "running" and s.section == "S2" and s.director.active and is_equal_approx(s.run.x, 40), "Respawn after an early slam stays in the chase")
+	s.step(.02, 0, false, false, 0, 19.32)
+	s.step(1.8, 0, false, false, 0, 21.1)
+	check(s.status == "running" and s.section == "S2" and s.director.active and is_equal_approx(s.run.x, 10), "Respawn after an early slam stays in the chase")
 	# Face walls.
 	s = LevelModel.new(b, GameState.level, GameState.song)
 	place(s, 261.9)

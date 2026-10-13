@@ -19,7 +19,8 @@ func get_stream(key: String) -> AudioStream:
 				if stream is AudioStreamWAV:
 					stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 					stream.loop_begin = 0
-					stream.loop_end = stream.data.size() / (4 if stream.stereo else 2)
+					# data.size() is the *compressed* size for QOA/IMA imports; use the decoded length instead.
+					stream.loop_end = int(round(stream.get_length() * stream.mix_rate))
 				elif stream is AudioStreamOggVorbis:
 					stream.loop = true
 			streams[key] = stream

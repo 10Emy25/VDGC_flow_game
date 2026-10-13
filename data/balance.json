@@ -171,26 +171,26 @@
     {
       "key": "hum_walk",
       "tier": 1,
-      "hold_s": 2,
-      "min_s": 4
+      "hold_s": 1.5,
+      "min_s": 2.5
     },
     {
       "key": "sing_jog",
       "tier": 2,
-      "hold_s": 2,
-      "min_s": 4
+      "hold_s": 1.5,
+      "min_s": 2.5
     },
     {
       "key": "shout_run",
       "tier": 3,
       "hold_s": 1,
-      "min_s": 4
+      "min_s": 2.5
     },
     {
       "key": "sing_along",
       "tier": 0,
       "hold_s": 0,
-      "min_s": 6
+      "min_s": 3
     }
   ],
   "s1": {
@@ -475,15 +475,15 @@
     "part_world_real": {
       "twinkle": [
         0.0,
-        0.12
+        0.1
       ],
       "dark": [
-        0.18,
-        0.32
+        0.28,
+        0.28
       ],
       "rosie": [
-        0.4,
-        0.55
+        0.45,
+        0.6
       ]
     },
     "world_lerp": 1.2,

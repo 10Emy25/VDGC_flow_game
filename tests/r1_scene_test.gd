@@ -109,10 +109,11 @@ func _ready() -> void:
 	BeatClock.elapsed = 19.3
 	run.update_song()
 	check(run.world_props.size() == prop_count + 1, "Next song loop can bloom again")
+	BeatClock.elapsed = 5.0
 	run.model.x = run.bridge_event.x - 0.001
 	run.model.speed = 3
 	run._process(0.1)
-	near(run.model.x, 70, "Bridge prevents crossing")
+	near(run.model.x, 20, "Bridge prevents crossing")
 	near(run.model.speed, 0, "Mina stops at bridge edge")
 	var progress := run.bridge_progress
 	VoiceInput.tier = "HUM"
@@ -124,7 +125,7 @@ func _ready() -> void:
 	run._process(2.31)
 	check(run.bridge_ready, "One cumulative bar of TALK raises bridge")
 	run._process(0.3)
-	check(run.model.x > 70, "Raised bridge permits crossing")
+	check(run.model.x > 20, "Raised bridge permits crossing")
 	run.model.x = 240
 	run._process(0.1)
 	check(run.state.section == "S1" and run.model.x >= 240, "Flower path keeps going while the song plays: no waiting")

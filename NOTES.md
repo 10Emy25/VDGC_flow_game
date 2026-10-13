@@ -89,7 +89,8 @@ New placeholders come from `tools/generate_r25.py` (never overwrites PNGs). Rend
 
 ## R2.6 (second playtest)
 
-- **No more waiting at the end of the flower path.** The song (now 48 s: verse, changed verse, Ring Around the Rosie) is no longer tied to a path end. When it is cut, every event from S2 on is shifted (`LevelData.shift_from`) so the chase starts exactly where Mina is. Nothing of the chase triggers before the slam. The flower path runs on to `song_view.s1_decor_end_m`.
+- **No more waiting at the end of the flower path.** The song (now 19.2 s: "Twinkle, twinkle, little star / How I wonder what you are / I can see just where you are / Ashes! Ashes! / We all fall—") is no longer tied to a path end. When it is cut, every event from S2 on is shifted (`LevelData.shift_from`) so the chase starts exactly where Mina is. Nothing of the chase triggers before the slam. The flower path runs on to `song_view.s1_decor_end_m`.
 - **The dream visibly decays while you sing.** `song_view.part_world_real` ramps the real look line by line (verse 0→0.12, changed verse 0.18→0.32, Rosie 0.4→0.55, with darkness from 0.3). Changed lines are red and start with a one-frame flash.
 - **Stuck helper.** If Mina has not moved for `stuck.after_s` (4 s) outside S1 and outside an eye sequence, the prompt explains exactly what to do (face wall, plank slip, bridge, gate, safe zone, or "make a sound to move").
 - First gate moved to 245 (45 m after the slam) and spawn grace 2 s so the first seconds of the chase are survivable.
+- **Loop bug fixed (R2.6.1).** `Sfx` set `loop_end` from `stream.data.size()`, which is the *compressed* size for QOA-imported WAVs, so every music loop jumped back early (the song after ~13.6 s, wiping the lyrics back to line 1). It now uses the decoded length; `run_model_test` checks it. Song shortened to 19.2 s, bridge moved to 20 m, tutorial timings shortened to fit.
