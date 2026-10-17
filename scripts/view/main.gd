@@ -67,7 +67,13 @@ func show_clinic() -> void:
 func show_run() -> void:
 	var run := RunView.new()
 	run.run_finished.connect(show_ending)
+	run.flower_triggered.connect(show_flower_night)
 	replace_view(run)
+
+func show_flower_night() -> void:
+	var night: FlowerNight = preload("res://scenes/flower_night.tscn").instantiate()
+	night.night_finished.connect(show_ending)
+	replace_view(night)
 
 func show_ending() -> void:
 	var ending := EndingView.new()

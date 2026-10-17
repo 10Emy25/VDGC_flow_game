@@ -2,6 +2,8 @@ class_name RunView
 extends Control
 
 signal run_finished
+signal flower_triggered
+var flower_night_started: bool = false
 var state: LevelModel
 var model: RunModel
 var tutorial: TutorialModel
@@ -255,6 +257,11 @@ func _process(delta: float) -> void:
 		tutorial.step(delta, tier_index)
 	model.guard_enabled = not GameState.settings.keyboard_mode
 	state.step(delta, VoiceInput.speed_target, VoiceInput.is_shouting, VoiceInput.is_audible, tier_index, BeatClock.elapsed)
+	# Trigger zone at the start of the flower hiding sequence, before the gaze encounter.
+	if not flower_night_started and state.status == "running" and model.x >= 438.0:
+		flower_night_started = true
+		flower_triggered.emit()
+		return
 	for message in state.messages:
 		handle_message(message)
 	if state.section == "S1":
