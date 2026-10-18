@@ -15,7 +15,8 @@ func get_stream(key: String) -> AudioStream:
 		var path := "res://audio/%s.%s" % [key, extension]
 		if ResourceLoader.exists(path):
 			var stream: AudioStream = load(path)
-			if key.begins_with("amb_") or key.begins_with("mus_"):
+			# amb_* and mus_* loop, except a one-shot music intro (mus_*_intro).
+			if (key.begins_with("amb_") or key.begins_with("mus_")) and not key.ends_with("_intro"):
 				if stream is AudioStreamWAV:
 					stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 					stream.loop_begin = 0
@@ -31,6 +32,10 @@ func get_stream(key: String) -> AudioStream:
 	streams[key] = null
 	return null
 
+# Tests run on the Dummy driver and stay silent; Godot's Movie Maker also uses it but records what plays.
+func silent() -> bool:
+	return AudioServer.get_driver_name() == "Dummy" and not OS.has_feature("movie")
+
 func play(key: String, volume_db: float = -10.0, pitch: float = 1.0) -> void:
 	play_at(key, volume_db, pitch, 0.0)
 
@@ -38,7 +43,7 @@ func play_at(key: String, volume_db: float, pitch: float, pan: float) -> void:
 	var stream := get_stream(key)
 	if stream == null:
 		return
-	if AudioServer.get_driver_name() == "Dummy":
+	if silent():
 		return
 	# A screen-space 2D player gives replaceable sounds stereo pan without a world camera.
 	var player := AudioStreamPlayer2D.new()
@@ -65,7 +70,7 @@ func loop(key: String, enabled: bool, volume_db: float = -10.0) -> void:
 	var stream := get_stream(key)
 	if stream == null:
 		return
-	if AudioServer.get_driver_name() == "Dummy":
+	if silent():
 		return
 	var player := AudioStreamPlayer.new()
 	player.stream = stream

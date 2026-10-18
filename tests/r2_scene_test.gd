@@ -119,7 +119,7 @@ func _ready() -> void:
 		if child is Button: restart = child
 	check(restart != null and restart.text == GameState.text("restart"), "End screen has Restart")
 	restart.pressed.emit()
-	check(main.current_view is ClinicView and main.current_view.flow.stage == 0, "Restart returns to calibration without warning")
+	check(main.current_view is CalibrationView and main.current_view.flow.stage == 0, "Restart returns to calibration without warning")
 	main.queue_free()
 	await get_tree().process_frame
 	finish()

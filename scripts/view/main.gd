@@ -33,8 +33,8 @@ func _ready() -> void:
 	show_warning()
 
 func _process(_delta: float) -> void:
-	mic_warning.visible = VoiceInput.missing_microphone and not GameState.settings.keyboard_mode and not settings_panel.visible and not current_view is EndingView
-	if current_view is RunView and current_view.state.status != "running":
+	mic_warning.visible = VoiceInput.missing_microphone and not GameState.settings.keyboard_mode and not settings_panel.visible and not current_view is EndingView and not current_view is BedroomIntro
+	if current_view is RunView and (current_view.state.status != "running" or current_view.dream_left > 0.0):
 		mic_warning.hide()
 
 func replace_view(view: Control) -> void:
@@ -57,15 +57,23 @@ func show_warning() -> void:
 	UIFactory.label(screen, "chapter_title", Rect2(300, 305, 1320, 66), GameState.balance.ui.therapist_size, Color(GameState.balance.palette.gold))
 	var warning := UIFactory.label(screen, "content_warning", Rect2(410, 455, 1100, 235), GameState.balance.ui.body_size, Color(GameState.balance.palette.warm))
 	warning.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	UIFactory.button(screen, "begin", Rect2(760, 765, 400, 80), show_clinic)
+	UIFactory.button(screen, "begin", Rect2(760, 765, 400, 80), show_calibration)
 
-func show_clinic() -> void:
-	var clinic := ClinicView.new()
-	clinic.entered_dream.connect(show_run)
-	replace_view(clinic)
+func show_calibration() -> void:
+	var calibration := CalibrationView.new()
+	calibration.finished.connect(show_bedroom)
+	replace_view(calibration)
 
-func show_run() -> void:
+func show_bedroom() -> void:
+	var intro := BedroomIntro.new()
+	intro.fell_asleep.connect(func(music_elapsed: float) -> void: show_run(true, music_elapsed))
+	replace_view(intro)
+
+# from_dream: Mina has just fallen asleep in the bedroom and the music-box intro is still playing.
+func show_run(from_dream: bool = false, music_elapsed: float = 0.0) -> void:
 	var run := RunView.new()
+	if from_dream:
+		run.dream_left = maxf(0.01, GameState.balance.intro.music_bars * GameState.balance.bar_s - music_elapsed)
 	run.run_finished.connect(show_ending)
 	run.flower_triggered.connect(show_flower_night)
 	replace_view(run)
@@ -87,7 +95,7 @@ func show_end_screen() -> void:
 	UIFactory.texture(screen, "run_bg_far_cute", Rect2(0, 0, 1920, 1080))
 	UIFactory.texture(screen, "ui_panel_wide", Rect2(360, 290, 1200, 570))
 	UIFactory.label(screen, "end_title", Rect2(420, 335, 1080, 200), GameState.balance.ui.title_size)
-	UIFactory.button(screen, "restart", Rect2(640, 641, 640, 80), show_clinic)
+	UIFactory.button(screen, "restart", Rect2(640, 641, 640, 80), show_calibration)
 
 func toggle_settings() -> void:
 	if settings_panel.visible:

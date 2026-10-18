@@ -47,8 +47,9 @@ func _process(delta: float) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not done and GameState.settings.keyboard_mode and event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_SPACE:
-		advance()
+		# Mark it handled first: the last sample finishes calibration, which can replace this screen.
 		get_viewport().set_input_as_handled()
+		advance()
 
 func advance() -> void:
 	if done:

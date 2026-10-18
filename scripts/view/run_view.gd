@@ -68,6 +68,11 @@ var walls: Dictionary = {}
 var drums_pending := false
 var last_song_line := -1
 var flash_left := 0.0
+# Arriving from the bedroom: seconds of music-box intro left before the song starts.
+var dream_left := 0.0
+var dream_length := 0.0
+var dream_veil: ColorRect
+var dream_stars: DreamStars
 
 func _ready() -> void:
 	theme = GameState.ui_theme
@@ -81,10 +86,12 @@ func _ready() -> void:
 	bridge_event = level.first("bridge")
 	for error in level.validation_errors(GameState.balance):
 		push_warning(error)
-	Sfx.stop_all()
-	Sfx.loop("mus_song", true, GameState.balance.audio.song_db)
-	Sfx.loop("mus_pad", true, GameState.balance.audio.pad_db)
-	BeatClock.reset("mus_song")
+	if dream_left > 0.0:
+		# The bedroom already stopped its sounds; the music-box intro keeps playing into the song.
+		dream_length = (GameState.balance.intro.music_bars - GameState.balance.intro.handover_bars) * GameState.balance.bar_s
+	else:
+		Sfx.stop_all()
+		start_song()
 	for layer_index in range(3):
 		var key: String = GameState.balance.parallax.keys[layer_index]
 		var factor: float = GameState.balance.parallax.factors[layer_index]
@@ -203,7 +210,52 @@ func _ready() -> void:
 	slam_text.visible = false
 	BeatClock.bar_started.connect(_on_bar)
 	GameState.settings_changed.connect(refresh_hint)
+	if dream_left > 0.0:
+		dream_veil = ColorRect.new()
+		dream_veil.size = Vector2(1920, 1080)
+		dream_veil.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var veil_material := ShaderMaterial.new()
+		veil_material.shader = load("res://shaders/dream_veil.gdshader")
+		dream_veil.material = veil_material
+		transition_layer.add_child(dream_veil)
+		dream_stars = DreamStars.new()
+		transition_layer.add_child(dream_stars)
+		update_dream()
 	update_view(0.0)
+
+func start_song() -> void:
+	Sfx.loop("mus_song", true, GameState.balance.audio.song_db)
+	Sfx.loop("mus_pad", true, GameState.balance.audio.pad_db)
+	BeatClock.reset("mus_song")
+
+# From black and starry, through a soft pastel blur, to the clear flower path; the HUD arrives last.
+func update_dream() -> void:
+	var config: Dictionary = GameState.balance.intro.dream
+	var progress := clampf(1.0 - dream_left / maxf(dream_length, 0.01), 0.0, 1.0)
+	var material := dream_veil.material as ShaderMaterial
+	material.set_shader_parameter("lids", 1.0)
+	material.set_shader_parameter("darkness", 1.0 - smoothstep(0.0, 0.3, progress))
+	material.set_shader_parameter("blur_px", config.blur_px * (1.0 - smoothstep(0.08, 0.97, progress)))
+	material.set_shader_parameter("haze", config.haze * (1.0 - smoothstep(0.25, 1.0, progress)))
+	material.set_shader_parameter("vignette", 0.6 * (1.0 - smoothstep(0.2, 1.0, progress)))
+	dream_stars.music_time = GameState.balance.intro.music_bars * GameState.balance.bar_s - dream_left
+	dream_stars.strength = 1.0 - smoothstep(0.1, 0.55, progress)
+	pivot_offset = Vector2(960, 540)
+	scale = Vector2.ONE * lerpf(config.zoom, 1.0, smoothstep(0.0, 1.0, progress))
+	var hud_alpha := clampf(1.0 - dream_left / config.hud_fade_s, 0.0, 1.0)
+	for child in hud_layer.get_children():
+		if child is CanvasItem:
+			child.modulate.a = hud_alpha
+
+func end_dream() -> void:
+	dream_left = 0.0
+	dream_veil.queue_free()
+	dream_stars.queue_free()
+	scale = Vector2.ONE
+	for child in hud_layer.get_children():
+		if child is CanvasItem:
+			child.modulate.a = 1.0
+	start_song()
 
 func make_decoration() -> void:
 	var sections := level.of_type("section")
@@ -252,6 +304,14 @@ func make_shade(rect_value: Rect2, color: Color, parent: Node = null) -> ColorRe
 func _process(delta: float) -> void:
 	if finished:
 		return
+	if dream_left > 0.0:
+		dream_left -= delta
+		if dream_left <= 0.0:
+			end_dream()
+		else:
+			update_dream()
+			update_view(delta)
+			return
 	var tier_index: int = ["QUIET", "HUM", "TALK", "SHOUT"].find(VoiceInput.tier)
 	if state.section == "S1":
 		tutorial.step(delta, tier_index)

@@ -14,23 +14,36 @@ func _ready() -> void:
 	main = load("res://scenes/main.tscn").instantiate()
 	add_child(main)
 	await snapshot("01_warning")
-	main.show_clinic()
+	main.show_calibration()
 	await snapshot("02_calibration")
-	var clinic: ClinicView = main.current_view
-	clinic.flow.advance()
-	clinic.flow.advance()
-	clinic.flow.advance()
-	for y in range(440, 551, 20):
-		clinic.brush_at(Vector2(940, y))
-	await snapshot("03_sand_brush")
-	for y in range(405, 620, 22):
-		for x in range(855, 1080, 22):
-			if not clinic.transitioning:
-				clinic.brush_at(Vector2(x, y))
-	clinic._process(GameState.balance.sand.transition_s * 0.5)
-	await snapshot("03b_trance")
-	clinic._process(GameState.balance.sand.transition_s)
+	var calibration: CalibrationView = main.current_view
+	calibration.flow.advance()
+	calibration.flow.advance()
+	calibration.flow.advance()
+	var intro: BedroomIntro = main.current_view
+	intro.process_mode = Node.PROCESS_MODE_DISABLED
+	for index in range(80):
+		intro._process(0.05)
+	await snapshot("03_bedroom")
+	while intro.step.get("insert", "") != "hands":
+		intro._process(0.05)
+		intro.press()
+	intro._process(0.6)
+	await snapshot("03b_shaking_hands")
+	while not intro.sleeping:
+		intro._process(0.05)
+		intro.press()
+	for index in range(60):
+		intro._process(0.05)
+	await snapshot("03c_falling_asleep")
+	while main.current_view == intro:
+		intro._process(0.05)
 	var run: RunView = main.current_view
+	run.process_mode = Node.PROCESS_MODE_DISABLED
+	run._process(run.dream_left * 0.5)
+	await snapshot("03d_dream_clearing")
+	run._process(run.dream_left + 0.01)
+	run.process_mode = Node.PROCESS_MODE_PAUSABLE
 	await snapshot("04_flower_path")
 	main.toggle_settings()
 	await snapshot("05_settings")

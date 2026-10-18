@@ -59,6 +59,9 @@ func ensure_run() -> RunView:
 		main.settings_panel.close()
 	if current_run() == null:
 		main.show_run()
+	# Still waking up from the bedroom: skip the rest of the dream so the jump applies at once.
+	if current_run().dream_left > 0.0:
+		current_run().end_dream()
 	return current_run()
 
 func go_section(id: String) -> void:

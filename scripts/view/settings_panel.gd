@@ -74,11 +74,7 @@ func start_recalibration() -> void:
 	recalibration = Control.new()
 	recalibration.process_mode = Node.PROCESS_MODE_ALWAYS
 	add_child(recalibration)
-	UIFactory.texture(recalibration, "clinic_bg", Rect2(0, 0, 1920, 1080))
-	UIFactory.texture(recalibration, "sandtray", UIFactory.rect(GameState.balance.layout.tray_rect))
-	UIFactory.texture(recalibration, "sand_layer", UIFactory.rect(GameState.balance.layout.sand_rect))
-	UIFactory.texture(recalibration, "clinic_figure", UIFactory.rect(GameState.balance.layout.figure_rect))
-	UIFactory.label(recalibration, "calibration_title", Rect2(400, 50, 1120, 90), GameState.balance.ui.title_size)
+	CalibrationView.build_backdrop(recalibration)
 	var flow := CalibrationFlow.new()
 	flow.process_mode = Node.PROCESS_MODE_ALWAYS
 	recalibration.add_child(flow)

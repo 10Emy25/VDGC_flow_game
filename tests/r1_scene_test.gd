@@ -9,32 +9,29 @@ func _ready() -> void:
 	for child in main.current_view.get_children():
 		if child is Button:
 			child.pressed.emit()
-	var clinic: ClinicView = main.current_view
-	check(clinic.flow.stage == 0, "Clinic begins with silence")
-	check(clinic.flow.get_parent() == clinic.hud_layer and clinic.hud_layer.layer > PostFX.layer, "Clinic text stays above trance and PostFX")
+	var calibration: CalibrationView = main.current_view
+	check(calibration != null and calibration.flow.stage == 0, "Begin opens calibration, starting with silence")
 	var event := InputEventKey.new()
 	event.physical_keycode = KEY_SPACE
 	event.pressed = true
 	for index in range(3):
-		clinic.flow._unhandled_input(event)
-	check(clinic.brush_ready, "Three keyboard samples open sand brush")
-	near(VoiceInput.model.floor_db, -50, "Keyboard clinic uses defaults")
+		calibration.flow._unhandled_input(event)
+	near(VoiceInput.model.floor_db, -50, "Keyboard calibration uses defaults")
 	var config := ConfigFile.new()
 	check(config.load("user://voice_calibration.cfg") == OK, "Calibration saved")
 	near(config.get_value("voice", "talk_db"), -32, "Saved calibration values")
-	check(clinic.reveal_fraction() == 0.0, "Doll starts buried")
-	clinic.brush_at(Vector2(480, 330))
-	check(clinic.reveal_fraction() == 0.0, "Brushing outside doll cannot reveal it")
-	clinic.last_brush = Vector2.INF
-	for y in range(405, 620, 22):
-		for x in range(855, 1080, 22):
-			if not clinic.transitioning:
-				clinic.brush_at(Vector2(x, y))
-	check(clinic.reveal_fraction() >= 0.7, "Doll reveal threshold measured from mask")
-	check(clinic.transitioning, "Doll reveal begins trance")
-	clinic._process(GameState.balance.sand.transition_s)
+	var intro: BedroomIntro = main.current_view
+	check(intro != null, "Calibration leads into the bedroom")
+	intro.process_mode = Node.PROCESS_MODE_DISABLED
+	var guard := 0
+	while main.current_view == intro and guard < 4000:
+		intro._process(0.05)
+		intro.press()
+		guard += 1
 	var run: RunView = main.current_view
-	check(run != null, "Trance reaches S1")
+	check(run != null and run.dream_left > 0.0, "Falling asleep reaches S1 through the dream")
+	run._process(run.dream_left + 0.01)
+	check(run.dream_left <= 0.0 and BeatClock.master_key == "mus_song", "The song starts when the dream clears")
 	check(run.hud_layer.layer > PostFX.layer and run.prompt.get_parent() == run.hud_layer, "Run text stays above distortion")
 	run.process_mode = Node.PROCESS_MODE_DISABLED
 	VoiceInput.process_mode = Node.PROCESS_MODE_DISABLED
@@ -133,8 +130,8 @@ func _ready() -> void:
 	run._process(0.02)
 	check(main.current_view == run and run.state.section == "S2" and run.slam_face.visible, "Song cut leads into the face slam and S2")
 	check(run.state.level.first("gate").x > 260, "The chase is shifted to start where the slam happened")
-	main.show_clinic()
-	check(main.current_view is ClinicView and main.current_view.flow.stage == 0, "Replay calibrates again, skipping warning")
+	main.show_calibration()
+	check(main.current_view is CalibrationView and main.current_view.flow.stage == 0, "Replay calibrates again, skipping warning")
 	main.queue_free()
 	await get_tree().process_frame
 	finish()

@@ -1,0 +1,37 @@
+{
+  "help": [
+    "S0 bedroom opening, played top to bottom. Each step can use any of these keys:",
+    "pose: Mina's picture in bed (art key). Poses cross-fade.",
+    "say: a key from dialogue.json shown in the narration box; waits until it is read (click/Space skips). \"\" hides the box.",
+    "wait: seconds to stay on this step.",
+    "insert: full-screen close-up, \"hands\" or \"pills\" (stays while the next steps use the same insert).",
+    "show / hide: nightstand props (prop_book, prop_phone, prop_pill_bottle, prop_water_glass).",
+    "sfx: one-shot sound; its volume is audio.<name>_db in balance.json. clock_db: change the clock volume.",
+    "heart: true/false starts or fades the heartbeat. tremble: shaky hands. glow: phone light on her face.",
+    "sleep: true starts falling asleep: eyes close, the music-box intro begins, and the dream follows."
+  ],
+  "steps": [
+    {"pose": "bed_mina_asleep", "wait": 3.2},
+    {"say": "intro_day"},
+    {"pose": "bed_mina_awake", "wait": 0.9},
+    {"say": "intro_cant_sleep", "clock_db": -17},
+    {"pose": "bed_mina_turn", "sfx": "sfx_rustle", "wait": 1.8},
+    {"pose": "bed_mina_awake", "sfx": "sfx_rustle", "wait": 1.4},
+    {"pose": "bed_mina_sit", "sfx": "sfx_rustle", "heart": true, "wait": 1.0},
+    {"say": "intro_hands", "insert": "hands"},
+    {"insert": "hands", "wait": 2.2},
+    {"pose": "bed_mina_reach", "tremble": true, "wait": 0.6},
+    {"pose": "bed_mina_phone", "hide": ["prop_phone"], "glow": true, "sfx": "sfx_phone", "tremble": true, "wait": 2.4},
+    {"pose": "bed_mina_reach", "show": ["prop_phone"], "tremble": true, "wait": 0.6},
+    {"pose": "bed_mina_book", "hide": ["prop_book"], "sfx": "sfx_page", "tremble": true, "wait": 2.4},
+    {"pose": "bed_mina_reach", "show": ["prop_book"], "tremble": true, "wait": 0.6},
+    {"pose": "bed_mina_sit", "say": "", "wait": 1.2},
+    {"say": "intro_must_sleep"},
+    {"pose": "bed_mina_reach", "tremble": true, "wait": 0.8},
+    {"insert": "pills", "hide": ["prop_pill_bottle"], "wait": 3.6},
+    {"pose": "bed_mina_drink", "hide": ["prop_water_glass"], "show": ["prop_pill_bottle"], "sfx": "sfx_swallow", "heart": false, "wait": 1.9},
+    {"pose": "bed_mina_reach", "show": ["prop_water_glass"], "wait": 0.6},
+    {"pose": "bed_mina_awake", "sfx": "sfx_rustle", "say": "", "wait": 1.4},
+    {"sleep": true}
+  ]
+}

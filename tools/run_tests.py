@@ -29,7 +29,7 @@ try:
     png=b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',94,37,8,6,0,0,0))+chunk(b'IDAT',zlib.compress(raw))+chunk(b'IEND',b'')
     fixture.with_suffix('.png').write_bytes(png)
     run(['--editor','--import'])
-    for suite in ('voice_test','run_model_test','r1_scene_test','art_registry_test','monster_director_test','level_model_test','playthrough','r2_scene_test','tester_mode_test'):
+    for suite in ('voice_test','run_model_test','r1_scene_test','intro_test','art_registry_test','monster_director_test','level_model_test','playthrough','r2_scene_test','tester_mode_test'):
         run(['--scene',f'res://tests/{suite}.tscn'])
     run(['--quit-after','20'])
     print('All R1/R2 suites and main-scene smoke check passed.')

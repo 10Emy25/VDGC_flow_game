@@ -10,6 +10,8 @@
 
 **操作**：对着麦克风发声，越大声跑得越快。按 **K** 切换键盘模式：Shift 是哼歌，Ctrl 是说话，Space 是尖叫。
 
+**开场流程**：标题 → 麦克风校准 → S0 卧室（旁白、手抖、吃药、闭眼）→ 一闪一闪亮晶晶八音盒前奏 → 从模糊到清晰进入 S1 花之路。旁白可以点击或按空格加速。
+
 **测试者模式**（只在编辑器里按 F5 时生效）：
 
 | 按键 | 作用 |
@@ -32,6 +34,7 @@
 | 数值（怪物速度、跳跃门槛等） | `data/balance.json` | 不用 |
 | 关卡布局（障碍、眼睛、存档点位置） | `data/level.json` | 不用 |
 | 儿歌歌词 | `data/song.json` | 不用 |
+| 开场卧室动画（动作顺序、停留时间、旁白、特写） | `data/intro.json`（旁白文字在 `data/dialogue.json` 的 `intro_*`） | 不用 |
 
 **规则**：开始干活前先 **Pull**；改完马上 **Commit + Push**，提交说明写清楚改了什么；同一个 `.json` 或 `.tscn` 文件不要两个人同时改。
 
@@ -40,6 +43,8 @@
 ---
 
 ## 开发说明（R1/R2 原文）
+
+> **R2.7:** the sand-tray clinic opening was replaced by a bedroom opening (calibration screen → S0 bedroom → dream → S1). See `NOTES.md` § R2.7. The text below describes R1/R2 as they were built.
 
 A Godot 4.4+ / GDScript / Compatibility project. R1’s warning, clinic, voice input, and flower path now lead into the full S2–S5 level, both monsters, hiding, checkpoints/respawn, speed gates, beat surges, clinic ending, and End of Chapter/Restart. Face slam, scripted scares, the world art switch, layered music, F1 debug tools, flow meter, and scream budget remain R3 work.
 

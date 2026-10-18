@@ -122,12 +122,6 @@
   },
   "strong_scare_limit": 4,
   "scare_min_gap_s": 45,
-  "sand": {
-    "brush_radius_px": 38,
-    "reveal_target": 0.7,
-    "transition_s": 2.5,
-    "sound_interval_s": 0.12
-  },
   "art_frames": {
     "mina_idle": 2,
     "mina_walk": 6,
@@ -208,14 +202,11 @@
   "audio": {
     "default_db": -10,
     "mic_mute_db": -80,
-    "clinic_db": -26,
     "clock_db": -25,
     "song_db": -17,
     "pad_db": -30,
-    "sand_db": -22,
     "bloom_db": -20,
     "bridge_db": -19,
-    "blur_db": -22,
     "sample_rate": 22050,
     "threat_db": -14,
     "warning_db": -15,
@@ -233,7 +224,17 @@
     "heart_db": -14,
     "slam_db": -2,
     "growl_db": -12,
-    "break_db": -12
+    "break_db": -12,
+    "night_db": -30,
+    "intro_clock_db": -26,
+    "clock_loud_db": -17,
+    "intro_heart_db": -32,
+    "rustle_db": -16,
+    "page_db": -20,
+    "pills_db": -14,
+    "swallow_db": -16,
+    "phone_db": -24,
+    "dream_intro_db": -15
   },
   "layout": {
     "screen": [
@@ -257,21 +258,11 @@
       1070,
       530
     ],
-    "mask_size": [
-      535,
-      265
-    ],
     "doll_rect": [
       862,
       410,
       196,
       196
-    ],
-    "figure_rect": [
-      625,
-      310,
-      112,
-      154
     ],
     "meter_rect": [
       48,
@@ -309,9 +300,6 @@
       970,
       790
     ],
-    "sand_particle_life_s": 0.75,
-    "sand_particle_count": 4,
-    "particle_rise_px": 110,
     "pulse_hz": 1.5
   },
   "ui": {
@@ -503,5 +491,164 @@
   },
   "stuck": {
     "after_s": 4.0
+  },
+  "intro": {
+    "bed_rect": [
+      180,
+      340,
+      1460,
+      580
+    ],
+    "fade_in_s": 3.0,
+    "type_cps": 24,
+    "say_hold_s": 1.8,
+    "pose_fade_s": 0.35,
+    "push_in": 1.05,
+    "push_in_s": 50,
+    "focus": [
+      600,
+      560
+    ],
+    "breath_scale": 0.006,
+    "breath_hz": 0.22,
+    "insert_fade_s": 0.35,
+    "tremble_px": 1.2,
+    "insert_tremble_px": 5,
+    "insert_tremble_deg": 1.2,
+    "tremble_hz": 9,
+    "narration_rect": [
+      260,
+      880,
+      1400,
+      150
+    ],
+    "props": {
+      "prop_book": [
+        216,
+        664,
+        92,
+        22
+      ],
+      "prop_phone": [
+        314,
+        676,
+        60,
+        10
+      ],
+      "prop_pill_bottle": [
+        380,
+        618,
+        32,
+        68
+      ],
+      "prop_water_glass": [
+        418,
+        624,
+        32,
+        62
+      ]
+    },
+    "hands": {
+      "insert_hand_left": [
+        430,
+        330,
+        520,
+        760
+      ],
+      "insert_hand_right": [
+        970,
+        330,
+        520,
+        760
+      ]
+    },
+    "pills": {
+      "bottle_rect": [
+        340,
+        240,
+        760,
+        640
+      ],
+      "bottle_pivot": [
+        236,
+        400
+      ],
+      "bottle_mouth": [
+        541,
+        338
+      ],
+      "bottle_tilt_deg": 16,
+      "palm_rect": [
+        600,
+        480,
+        700,
+        700
+      ],
+      "palm_target": [
+        300,
+        390
+      ],
+      "pill_size": [
+        60,
+        36
+      ],
+      "tilt_s": 1.0,
+      "rattle_at_s": 0.5,
+      "drop_at_s": 1.3,
+      "drop_s": 0.45
+    },
+    "phone_glow": {
+      "center": [
+        720,
+        480
+      ],
+      "radius": 280,
+      "alpha": 0.5
+    },
+    "sleep": {
+      "lids": [
+        [
+          0,
+          1
+        ],
+        [
+          1.6,
+          0.55
+        ],
+        [
+          2.3,
+          0.8
+        ],
+        [
+          3.6,
+          0.3
+        ],
+        [
+          4.1,
+          0.45
+        ],
+        [
+          5.4,
+          0.0
+        ]
+      ],
+      "asleep_below": 0.35,
+      "zoom": 1.25,
+      "blur_px": 14,
+      "fade_sound_s": 4.5
+    },
+    "music_bars": 4,
+    "handover_bars": 1,
+    "stars": {
+      "count": 46,
+      "fade_in_s": 1.4,
+      "seed": 2024
+    },
+    "dream": {
+      "blur_px": 28,
+      "haze": 0.9,
+      "zoom": 1.06,
+      "hud_fade_s": 1.2
+    }
   }
 }
