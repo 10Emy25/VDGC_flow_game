@@ -1,32 +1,34 @@
-# Flowstate — v6: original opening and first stage restored
+# Flowstate — v7: flower-sticker nightmare ending
 
-Open this package's project.godot in Godot 4.7 and press F5. Play normally from the beginning. No shortcut is required.
+Open project.godot in Godot 4.7 and play normally. The original opening and first-stage map/logic restored in v6 remain unchanged. The existing late-cabinet transition, listening chase and voice confrontation remain intact.
 
-## Restored from the user's original ZIP
+## New final story
 
-- Original warning, calibration, bedroom movie and dream handoff.
-- Original first-stage level data, song timing, rhythm/voice movement, song-ending face slam, chase sections, covers, gates and planks.
-- Original decorative flowers and their positions. All artificially inserted flower landmarks are removed.
-- Original late cover_locker event and its artwork. The locker is not relocated to 520m or any other early point.
+After the confrontation's whiteout:
 
-The first stage's existing song-ending event can shift later encounters by an offset. The new trigger follows the actual locker event dictionary, so it remains aligned with the cabinet after that original shift. It does not assume a fixed world coordinate.
+1. Mina wakes with a start in daylight, exhales, and says “It is just a dream..”.
+2. The phone rings. She reaches for it and picks it up.
+3. Her best friend sends “Mina...I am really worried”, followed by “pls call me”.
+4. The player must choose OK or ... . There is no timeout or automatic choice.
+5. OK sends the message “OK”. Choosing ... sends nothing. In either case, the friend sends a cute flower sticker one second later.
+6. The sticker remains friendly and small for three seconds. It then escapes the phone frame and slowly grows to fill the screen over ten seconds. Its cartoon face gradually stretches into a pale, hollow ghost face as the room darkens and dissonant horror music rises.
+7. The ghost face holds briefly, then cuts to black. Play again returns to the original calibration/opening flow after explicit player input.
 
-The only replaced original handoff is the old early 438m flower-night trigger. The player now continues through the original first-stage gameplay to the original late cabinet.
+No external messages or calls are sent; this is in-game fictional dialogue.
 
-## New content begins only at that cabinet
+## Implementation
 
-When Mina approaches the cabinet, an Area2D overlap starts the film. The cabinet is already visible. Camera projection continues following until the cabinet reaches screen center, then locks. Mina hides behind it, a monster passes, she emerges and looks around, and black conceals the camera returning to follow. Stage two then begins with its existing listening guidance, directional sound and jump scares.
-
-The final encounter retains the same map and the slower v5 sequence: sustained monster roars, Mina's automatic scream, a second blackout, player-driven light using the scream bar, a slowly typed invitation, then converging taunts and their matched replies. The daytime best-friend-message ending remains.
+- dream_message_ending.gd owns the wake-up sequence, timed messages, real button branches, sticker movement and final fade.
+- flower_sticker.gd draws a vector flower whose face morphs continuously. No duplicate character or full sprite-strip display is used.
+- last_scream.gd hands the whiteout to the new ending; the original battle preceding it is preserved.
+- mus_flower_nightmare.wav is an original procedural dissonant drone. The spoken dream line uses a synthesized placeholder voice.
+- The existing Reduce Scares option suppresses the slight final face tremble.
 
 ## Verification
 
-- Byte comparison with the original archive confirms the original map, balance, intro data, bedroom/calibration scripts, movement/level/monster models and bedroom background are restored exactly.
-- Main-view warning/calibration/bedroom entry methods match the original code.
-- RunView's original song, rendering and event-handler methods match the original; only continuation observation and handoff hooks are added.
-- locker_normal_play_test uses the original playthrough policy from the starting position, with no teleport or shortcut. Until cabinet activation it compares movement, status, section and event positions against an independent original LevelModel every frame. It confirms the original song/slam and all intervening sections run before the cabinet film and S2.
-- last_scream_integration checks that the trigger follows the cabinet when the original song ending shifts its position, then checks camera locking, stage two and the same-map finale.
+- dream_message_ending_test exercises both real button handlers, rejects a second selection, proves the choice cannot auto-advance, checks the one-second sticker delay, friendly hold, gradual scale/morph and replay signal.
+- last_scream_test verifies the confrontation still flows into the new wake-up sequence.
+- last_scream_integration verifies the late cabinet, camera sequence, second stage and same-map finale remain connected.
+- Core restored opening/first-stage files were byte-compared to the delivered v6 ZIP and remain unchanged.
 
-Visual pacing and real microphone/headphone playback still need a local playtest. Vocal performances remain synthesized placeholders.
-
-Optional editor shortcuts remain N (cabinet preview), 9 (finale preview), K (keyboard voice simulation). They are not part of normal progression.
+Graphical timing and audio mix still require a local editor playtest. The new ending has not been pushed to GitHub as part of this local edit.

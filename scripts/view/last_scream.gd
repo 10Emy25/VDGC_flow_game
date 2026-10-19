@@ -41,6 +41,7 @@ var taunt: ScreamTaunt
 var taunt_cloud: Array[ScreamTaunt] = []
 var taunts := ["Nobody wants to hear you.", "You're always so afraid.", "Your voice doesn't matter."]
 var heartbeat: AudioStreamPlayer
+var dream_ending: DreamMessageEnding
 
 func _ready() -> void:
 	theme = GameState.ui_theme
@@ -149,21 +150,12 @@ func enter(next: String) -> void:
 		caption.text = ""
 		hint.text = ""
 	elif phase == "wake":
-		shade.hide()
-		for enemy in enemies: enemy.hide()
-		mina.flip_h = false
-		bedroom.show()
-		mina.texture = ArtRegistry.get_texture("bed_mina_awake")
-		mina.position = Vector2(180, 340)
-		mina.size = Vector2(1460, 580)
-		move_child(mina, bedroom.get_index() + 1)
-		Sfx.play("sfx_mina_exhale", -16)
-	elif phase == "phone":
-		mina.texture = ArtRegistry.get_texture("bed_mina_phone")
-		Sfx.play("sfx_phone", -16)
-		show_phone()
+		dream_ending = DreamMessageEnding.new()
+		dream_ending.finished.connect(func() -> void: finished.emit())
+		add_child(dream_ending)
 
 func _process(delta: float) -> void:
+	if dream_ending != null: return
 	age += delta
 	pulse = maxf(0, pulse - delta * 0.65)
 	if phase in ["auto_scream", "player_light", "invitation", "voice", "reply"]:
@@ -221,18 +213,6 @@ func _process(delta: float) -> void:
 			for incoming in taunt_cloud: incoming.hide()
 		flash.color.a = minf(1, age / 2.5)
 		if age >= 3.5: enter("wake")
-	elif phase == "wake":
-		flash.color.a = maxf(0, 1 - age / 2.5)
-		if age > 2.5:
-			caption.add_theme_color_override("font_color", Color("453b50"))
-			caption.text = "Morning."
-		if age >= 6: enter("phone")
-	elif phase == "phone":
-		caption.text = ""
-		if age >= 4 and not ended:
-			ended = true
-			var button := UIFactory.button(self, "", Rect2(750, 950, 420, 65), func() -> void: finished.emit())
-			button.text = "Let the morning in"
 	(shade.material as ShaderMaterial).set_shader_parameter("radius", radius + pulse * 0.2)
 	if GameState.settings.keyboard_mode and phase in ["player_light", "voice"]: hint.text = "Hold SPACE to SCREAM. Release to breathe."
 
@@ -278,16 +258,3 @@ func update_scream_meter(delta: float) -> void:
 	damage_bar.value = charge
 	meter_label.text = "SCREAM — THEIR WORDS ARE BREAKING" if VoiceInput.is_shouting else "YOUR VOICE  →  SCREAM"
 
-func show_phone() -> void:
-	phone = Panel.new()
-	phone.position = Vector2(1190, 240)
-	phone.size = Vector2(590, 650)
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color("f9f4e8")
-	style.set_corner_radius_all(28)
-	phone.add_theme_stylebox_override("panel", style)
-	add_child(phone)
-	var text := UIFactory.label(phone, "", Rect2(35, 30, 520, 580), 29, Color("39354a"))
-	text.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	text.text = "09:17   •   BEST FRIEND\n\nYesterday, 11:48 PM\nMina? You went quiet. Are you okay?\n\nToday, 8:06 AM\nI'm worried about you.\nYou don't have to tell me everything.\n\nToday, 9:12 AM\nI'm here. Call me when you're ready.\n\n│"

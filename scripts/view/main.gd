@@ -103,7 +103,7 @@ func show_flower_night() -> void:
 func show_last_scream() -> void:
 	if not current_view is RunView: show_run()
 	var finale: LastScream = current_view.start_last_scream()
-	if not finale.finished.is_connected(show_end_screen): finale.finished.connect(show_end_screen)
+	if not finale.finished.is_connected(show_calibration): finale.finished.connect(show_calibration)
 
 func show_ending() -> void:
 	var ending := EndingView.new()
