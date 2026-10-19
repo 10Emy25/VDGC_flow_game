@@ -37,6 +37,24 @@ func _process(_delta: float) -> void:
 	if current_view is RunView and (current_view.state.status != "running" or current_view.dream_left > 0.0):
 		mic_warning.hide()
 
+	if current_view is LastScream and current_view.phase in ["shock", "reveal", "white", "wake", "phone"]: mic_warning.hide()
+	if current_view is RunView and current_view.night_continuation != null:
+		if current_view.night_continuation.phase in ["blackout", "look", "listen"] or current_view.night_continuation.elapsed >= 73: mic_warning.hide()
+
+	var cinematic: bool = current_view is LastScream and current_view.phase in ["shock", "reveal"]
+	if current_view is RunView and current_view.night_continuation != null:
+		cinematic = current_view.night_continuation.phase in ["blackout", "look", "listen"] or current_view.night_continuation.elapsed >= 73
+	settings_button.visible = not cinematic and not settings_panel.visible
+
+	if current_view is RunView and current_view.final_confrontation != null:
+		var final_phase: String = current_view.final_confrontation.phase
+		mic_warning.visible = VoiceInput.missing_microphone and not GameState.settings.keyboard_mode and not settings_panel.visible and final_phase in ["player_light", "voice"]
+		settings_button.visible = final_phase not in ["roar", "auto_scream"] and not settings_panel.visible
+
+	if current_view is RunView and current_view.locker_pass != null and current_view.locker_pass.active:
+		settings_button.hide()
+		mic_warning.hide()
+
 func replace_view(view: Control) -> void:
 	if current_view != null:
 		view_host.remove_child(current_view)
@@ -75,13 +93,17 @@ func show_run(from_dream: bool = false, music_elapsed: float = 0.0) -> void:
 	if from_dream:
 		run.dream_left = maxf(0.01, GameState.balance.intro.music_bars * GameState.balance.bar_s - music_elapsed)
 	run.run_finished.connect(show_ending)
-	run.flower_triggered.connect(show_flower_night)
+	run.flower_triggered.connect(show_last_scream)
 	replace_view(run)
 
 func show_flower_night() -> void:
-	var night: FlowerNight = preload("res://scenes/flower_night.tscn").instantiate()
-	night.night_finished.connect(show_ending)
-	replace_view(night)
+	if not current_view is RunView: show_run()
+	if current_view.night_continuation == null: current_view.start_night_continuation()
+
+func show_last_scream() -> void:
+	if not current_view is RunView: show_run()
+	var finale: LastScream = current_view.start_last_scream()
+	if not finale.finished.is_connected(show_end_screen): finale.finished.connect(show_end_screen)
 
 func show_ending() -> void:
 	var ending := EndingView.new()

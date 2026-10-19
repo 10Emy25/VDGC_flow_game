@@ -31,7 +31,13 @@ func _process(_delta: float) -> void:
 		where = "   |   %s  %.0f m  gap %.1f m  eye %s" % [run.state.section, run.model.x, run.state.director.gap, run.state.director.phase]
 		if god:
 			run.state.director.invulnerable_left = maxf(run.state.director.invulnerable_left, 0.5)
-	label.text = "TESTER  1-5 section · 6 next checkpoint · 7 god %s · 8 skip song · 0 hide%s" % ["ON" if god else "off", where]
+	var cinematic: bool = main.current_view is LastScream and main.current_view.phase in ["shock", "reveal"]
+	if run != null and run.night_continuation != null:
+		cinematic = run.night_continuation.phase in ["blackout", "look", "listen"] or run.night_continuation.elapsed >= 73
+	if run != null and run.locker_pass != null and run.locker_pass.active: cinematic = true
+	if run != null and run.final_confrontation != null: cinematic = true
+	label.modulate.a = 0 if cinematic else 1
+	label.text = "TESTER  1-5 section · 6 next checkpoint · 7 god %s · 8 skip song · N night · 9 finale · 0 hide%s" % ["ON" if god else "off", where]
 
 func _input(event: InputEvent) -> void:
 	if not (event is InputEventKey and event.pressed and not event.echo):
@@ -42,6 +48,12 @@ func _input(event: InputEvent) -> void:
 		KEY_3: go_section("S3")
 		KEY_4: go_section("S4")
 		KEY_5: go_section("S5")
+		KEY_N:
+			main.show_run()
+			main.current_view.model.x = main.current_view.locker_pass.locker_x - 25
+			main.current_view.state.bridge_ready = true
+			main.current_view.state.bridge_progress = 1.0
+		KEY_9: main.show_last_scream()
 		KEY_6: next_checkpoint()
 		KEY_7: god = not god
 		KEY_8: skip_song()

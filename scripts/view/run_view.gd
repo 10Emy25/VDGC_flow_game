@@ -4,6 +4,10 @@ extends Control
 signal run_finished
 signal flower_triggered
 var flower_night_started: bool = false
+var locker_pass: LockerPass
+var night_continuation: NightContinuation
+var final_confrontation: LastScream
+var final_layer: CanvasLayer
 var state: LevelModel
 var model: RunModel
 var tutorial: TutorialModel
@@ -223,6 +227,10 @@ func _ready() -> void:
 		update_dream()
 	update_view(0.0)
 
+	locker_pass = LockerPass.new()
+	locker_pass.run = self
+	add_child(locker_pass)
+
 func start_song() -> void:
 	Sfx.loop("mus_song", true, GameState.balance.audio.song_db)
 	Sfx.loop("mus_pad", true, GameState.balance.audio.pad_db)
@@ -302,6 +310,13 @@ func make_shade(rect_value: Rect2, color: Color, parent: Node = null) -> ColorRe
 	return node
 
 func _process(delta: float) -> void:
+	if final_confrontation != null: return
+	if locker_pass != null and locker_pass.active:
+		locker_pass.step(delta)
+		return
+	if night_continuation != null:
+		night_continuation.step(delta)
+		return
 	if finished:
 		return
 	if dream_left > 0.0:
@@ -317,16 +332,35 @@ func _process(delta: float) -> void:
 		tutorial.step(delta, tier_index)
 	model.guard_enabled = not GameState.settings.keyboard_mode
 	state.step(delta, VoiceInput.speed_target, VoiceInput.is_shouting, VoiceInput.is_audible, tier_index, BeatClock.elapsed)
-	# Trigger zone at the start of the flower hiding sequence, before the gaze encounter.
-	if not flower_night_started and state.status == "running" and model.x >= 438.0:
-		flower_night_started = true
-		flower_triggered.emit()
-		return
 	for message in state.messages:
 		handle_message(message)
 	if state.section == "S1":
 		update_song()
 	update_view(delta)
+	if locker_pass != null: locker_pass.update_follow_scene()
+
+func start_night_continuation() -> void:
+	flower_night_started = true
+	night_continuation = NightContinuation.new()
+	night_continuation.run = self
+	add_child(night_continuation)
+
+func start_last_scream() -> LastScream:
+	if final_confrontation != null: return final_confrontation
+	if night_continuation != null:
+		night_continuation.closing_left.stop()
+		night_continuation.closing_right.stop()
+		night_continuation.hide()
+	hud_layer.hide()
+	mina.hide()
+	final_layer = CanvasLayer.new()
+	final_layer.layer = 8
+	add_child(final_layer)
+	final_confrontation = LastScream.new()
+	final_confrontation.embedded = true
+	final_confrontation.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	final_layer.add_child(final_confrontation)
+	return final_confrontation
 
 func handle_message(message: Dictionary) -> void:
 	var audio: Dictionary = GameState.balance.audio
@@ -414,6 +448,7 @@ func show_hint(key: String, seconds: float) -> void:
 
 # Drums and heartbeat join on an even bar so the accented "shout bar" lines up with the wall's lunges.
 func _on_bar(index: int) -> void:
+	if night_continuation != null or (locker_pass != null and locker_pass.active): return
 	if not drums_pending or index % int(GameState.balance.m1.lunge_every_bars) != 0:
 		return
 	drums_pending = false
