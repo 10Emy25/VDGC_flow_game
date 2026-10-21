@@ -9,6 +9,8 @@ func _ready() -> void:
 	var run: RunView = main.current_view
 	run.set_process(false)
 	var original := LevelModel.new(GameState.balance, GameState.level, GameState.song)
+	# Only the new recording duration intentionally differs from the original opening.
+	original.song_end = Sfx.get_stream("mus_song").get_length()
 	var policy: Node = load("res://tests/playthrough.gd").new()
 	var voice := VoiceModel.new(GameState.balance)
 	var saw_original_slam := false

@@ -193,9 +193,9 @@ func step(delta: float, distance: float, section: String, safe: bool, hidden: bo
 	if phase != "GAZE" or captured:
 		return
 	var sweep: float = balance.m2.beam_half_range_m
-	var travel: float = fposmod((clock - phase_start) * balance.m2.beam_speed, sweep * 4.0)
-	beam_offset = -sweep + travel if travel <= sweep * 2.0 else sweep * 3.0 - travel
-	if not hidden and absf(beam_offset) <= balance.m2.beam_half_width_m:
+	var eye_elapsed := clock - phase_start
+	beam_offset = EyeAnimation.scan_direction(eye_elapsed) * sweep
+	if EyeAnimation.beam_active(eye_elapsed) and not hidden and absf(beam_offset) <= balance.m2.beam_half_width_m:
 		sight_s += delta
 		if sight_s + 0.000001 >= balance.m2.sight_s:
 			try_capture("sight")

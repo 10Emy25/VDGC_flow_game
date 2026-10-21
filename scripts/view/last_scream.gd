@@ -2,7 +2,7 @@ class_name LastScream
 extends Control
 signal finished
 const CENTER := Vector2(960, 540)
-const MINA_RECT := Rect2(830, 360, 260, 360)
+const MINA_RECT := Rect2(856, 396, 208, 288)
 const WORD_ORIGINS := [Vector2(180, 200), Vector2(960, 70), Vector2(1740, 200), Vector2(1860, 540), Vector2(1740, 780), Vector2(960, 810), Vector2(180, 780), Vector2(60, 540)]
 const SHOUT_SECONDS := 2.2
 var phase := "roar"
@@ -54,13 +54,13 @@ func _ready() -> void:
 		UIFactory.texture(self, "run_bg_mid_real", Rect2(0, 0, 1920, 1080))
 	beast_frames = ArtRegistry.frames("m1_wall", "m1_wall")
 	for i in range(3):
-		var enemy := UIFactory.texture(self, "m1_wall", Rect2([50, 1510, 805][i], [230, 230, -140][i], 310, 520))
+		var enemy := UIFactory.texture(self, "m1_wall", Rect2([5, 1465, 760][i], [180, 180, -220][i], 400, 640))
 		enemy.texture = beast_frames[0]
-		enemy.size = Vector2(310, 520)
+		enemy.size = Vector2(400, 640)
 		enemies.append(enemy)
 	beast = enemies[0]
 	idle_frames = ArtRegistry.frames("mina_idle_real", "mina_idle")
-	mina = UIFactory.texture(self, "mina_crying", MINA_RECT)
+	mina = UIFactory.texture(self, "mina_idle_real", MINA_RECT)
 	mina.size = MINA_RECT.size
 	mina.flip_h = true
 	shade = ColorRect.new()
@@ -107,9 +107,13 @@ func _ready() -> void:
 	heartbeat.volume_db = -18
 	add_child(heartbeat)
 	roar_player = AudioStreamPlayer.new()
-	roar_player.stream = Sfx.get_stream("amb_final_roars")
+	roar_player.stream = Sfx.next_monster_roar()
 	roar_player.volume_db = -16
 	add_child(roar_player)
+	roar_player.finished.connect(func() -> void:
+		if phase == "roar":
+			roar_player.stream = Sfx.next_monster_roar()
+			if not Sfx.silent(): roar_player.play())
 	if not Sfx.silent(): roar_player.play()
 
 func enter(next: String) -> void:
@@ -159,7 +163,7 @@ func _process(delta: float) -> void:
 	age += delta
 	pulse = maxf(0, pulse - delta * 0.65)
 	if phase in ["auto_scream", "player_light", "invitation", "voice", "reply"]:
-		mina.texture = ArtRegistry.get_texture("mina_crying") if hits == 0 else idle_frames[int(age * 2) % idle_frames.size()]
+		mina.texture = idle_frames[0]
 		mina.position.y = MINA_RECT.position.y + sin(age * 9) * (2 if hits == 0 else 0.5)
 	quiet = 0.0 if VoiceInput.is_audible else quiet + delta
 	update_scream_meter(delta)
@@ -194,7 +198,7 @@ func _process(delta: float) -> void:
 		heartbeat.volume_db = -10
 		heartbeat.pitch_scale = 1.05 + charge * 0.2
 		hint.text = "SCREAM — BREAK THEIR WORDS" if VoiceInput.is_shouting else "LOUDER. SCREAM to break the words."
-		for i in range(hits, enemies.size()): enemies[i].texture = beast_frames[int(age * 5) % beast_frames.size()]
+		for i in range(hits, enemies.size()): enemies[i].texture = MonsterAnimation.at_time(age, GameState.balance.level_view.m1_fps)
 		radius = lerpf(radius, 0.18 + hits * 0.06 + (VoiceInput.level01 * 0.16 if VoiceInput.is_shouting else 0), minf(1, delta * 4))
 		if charge >= 1:
 			hits += 1

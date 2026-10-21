@@ -45,20 +45,15 @@ var jump_clock: float = 0.0
 var jump_left: float = 0.0
 var air_left: float = 0.0
 var rng: RandomNumberGenerator = RandomNumberGenerator.new()
-# Six standalone frame images: avoid SVG atlas/sprite-sheet frame import ambiguity.
-var run_frames: Array[Texture2D] = [
-    preload("res://art/mina_run_frame_0.png"),
-    preload("res://art/mina_run_frame_1.png"),
-    preload("res://art/mina_run_frame_2.png"),
-    preload("res://art/mina_run_frame_3.png"),
-    preload("res://art/mina_run_frame_4.png"),
-    preload("res://art/mina_run_frame_5.png")
-]
+# Eight individually supplied PNG frames, loaded without sprite-sheet slicing.
+var run_frames: Array[Texture2D] = []
 var roar_player: AudioStreamPlayer
 var growl_player: AudioStreamPlayer
-var crouch_tex: Texture2D = preload("res://art/mina_crouch_cute.svg")
+var crouch_tex: Texture2D
 
 func _ready() -> void:
+    run_frames = MinaAnimation.run_frames()
+    crouch_tex = MinaAnimation.idle_frames()[0]
     rng.randomize()
     theme = GameState.ui_theme
     Sfx.stop_all()
@@ -70,7 +65,8 @@ func _ready() -> void:
     sprite.hframes = 1
     sprite.vframes = 1
     sprite.frame = 0
-    sprite.texture = run_frames[0]
+    sprite.texture = MinaAnimation.idle_frames()[0]
+    sprite.scale = Vector2.ONE * (216.0 / MinaAnimation.RUN_REGION.size.y)
     # Dedicated stereo buses: left and right are unambiguous even with camera scrolling.
     setup_monster_stereo_buses()
     roar_player = create_monster_audio("sfx_m1_roar")
@@ -83,6 +79,8 @@ func _ready() -> void:
                 background_tiles.append(tile)
             elif tile.name.begins_with("Ground"):
                 ground_tiles.append(tile)
+    monster.texture = MonsterAnimation.at_time(0)
+    monster.scale = Vector2.ONE * 0.59
     monster.visible = false
     # Monster is only a visual Sprite2D during the cutscene: it has no collision shape.
     darkness.visible = false
@@ -94,6 +92,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
     clock += delta
+    if monster.visible: monster.texture = MonsterAnimation.at_time(clock, GameState.balance.level_view.m1_fps)
     if phase == "approach":
         # Automatically bring Mina to the flower in this editable scene.
         move_mina(RUN_SPEED, delta)
@@ -105,6 +104,7 @@ func _process(delta: float) -> void:
     elif phase == "hide":
         camera.global_position = Vector2(960.0, 540.0)
         sprite.texture = crouch_tex
+        sprite.scale = Vector2.ONE * (216.0 / MinaAnimation.RUN_REGION.size.y)
         sprite.hframes = 1
         sprite.frame = 0
         sprite.rotation = 0.0
@@ -118,6 +118,7 @@ func _process(delta: float) -> void:
         monster.visible = true
         monster.global_position = Vector2(lerpf(-300.0, 2250.0, minf(clock / 3.2, 1.0)), 510.0)
         sprite.texture = crouch_tex
+        sprite.scale = Vector2.ONE * (216.0 / MinaAnimation.RUN_REGION.size.y)
         sprite.hframes = 1
         sprite.frame = 0
         caption.text = ""
@@ -125,7 +126,8 @@ func _process(delta: float) -> void:
             monster.visible = false
             set_phase("emerge")
     elif phase == "emerge":
-        sprite.texture = run_frames[0]
+        sprite.texture = MinaAnimation.idle_frames()[0]
+        sprite.scale = Vector2.ONE * (216.0 / MinaAnimation.RUN_REGION.size.y)
         mina.global_position = mina.global_position.move_toward(Vector2(FLOWER_X + 195.0, FEET_Y - 90.0), delta * 210.0)
         sprite.rotation = 0.0
         caption.text = "(huff... huff...)"
@@ -190,7 +192,8 @@ func move_mina(speed: float, delta: float) -> void:
     mina.move_and_slide()
 
 func animate_feet(delta: float) -> void:
-    # Play distinct 300x360 frame textures; never display the entire 1800px strip.
+    # Keep the supplied frames whole and use the same display scale for all eight.
+    sprite.scale = Vector2.ONE * (216.0 / MinaAnimation.RUN_REGION.size.y)
     sprite.hframes = 1
     sprite.vframes = 1
     run_animation_time += delta
@@ -235,6 +238,10 @@ func update_monster_audio_positions() -> void:
 func play_monster_sound(player: AudioStreamPlayer, volume_db: float, pitch: float) -> void:
     if not is_instance_valid(player) or player.stream == null:
         return
+    if player == roar_player:
+        player.stream = Sfx.next_monster_roar()
+    elif is_instance_valid(roar_player):
+        roar_player.stop()
     player.bus = "MonsterLeft" if monster_side < 0 else "MonsterRight"
     player.volume_db = volume_db
     player.pitch_scale = pitch
@@ -276,7 +283,8 @@ func update_night(delta: float) -> void:
     if movement > 15.0:
         animate_feet(delta)
     else:
-        sprite.texture = run_frames[0]
+        sprite.texture = MinaAnimation.idle_frames()[0]
+        sprite.scale = Vector2.ONE * (216.0 / MinaAnimation.RUN_REGION.size.y)
         sprite.hframes = 1
         sprite.frame = 0
         sprite.position.y = lerpf(sprite.position.y, 0.0, 0.2)

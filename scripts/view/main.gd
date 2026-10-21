@@ -17,11 +17,30 @@ func _ready() -> void:
 	hud_layer.layer = 10
 	add_child(hud_layer)
 	settings_button = UIFactory.button(hud_layer, "settings", UIFactory.rect(GameState.balance.layout.settings_rect), toggle_settings)
+	settings_button.text = ""
+	settings_button.tooltip_text = "Settings"
+	settings_button.icon = preload("res://art/ingame_settings_icon.tres")
+	settings_button.expand_icon = true
+	settings_button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	for state in ["normal", "hover", "pressed", "hover_pressed", "focus", "disabled"]:
+		settings_button.add_theme_stylebox_override(state, StyleBoxEmpty.new())
+	settings_button.add_theme_color_override("icon_normal_color", Color.WHITE)
+	settings_button.add_theme_color_override("icon_hover_color", Color(0.8, 0.8, 0.8))
+	settings_button.add_theme_color_override("icon_pressed_color", Color(0.65, 0.65, 0.65))
 	settings_button.process_mode = Node.PROCESS_MODE_ALWAYS
 	settings_button.z_index = 10
 	settings_panel = SettingsPanel.new()
 	hud_layer.add_child(settings_panel)
-	settings_panel.closed.connect(func() -> void: settings_button.show())
+	settings_panel.opened.connect(func() -> void:
+		settings_panel.sounds_muted = false
+		if current_view is TitleMenu:
+			current_view.menu_music.stream_paused = true
+			settings_panel.sounds_muted = current_view.muted)
+	settings_panel.closed.connect(func() -> void:
+		settings_button.visible = not current_view is TitleMenu
+		if current_view is TitleMenu: current_view.menu_music.stream_paused = false)
+	settings_panel.homepage_requested.connect(func() -> void:
+		if not current_view is TitleMenu: show_title_menu())
 	mic_warning = UIFactory.label(hud_layer, "mic_missing", Rect2(590, 870, 1270, 45), GameState.balance.ui.small_size)
 	mic_warning.process_mode = Node.PROCESS_MODE_ALWAYS
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -30,7 +49,7 @@ func _ready() -> void:
 		var tester: Node = load("res://scripts/dev/tester_mode.gd").new()
 		tester.set("main", self)
 		add_child(tester)
-	show_warning()
+	show_title_menu()
 
 func _process(_delta: float) -> void:
 	mic_warning.visible = VoiceInput.missing_microphone and not GameState.settings.keyboard_mode and not settings_panel.visible and not current_view is EndingView and not current_view is BedroomIntro
@@ -55,6 +74,10 @@ func _process(_delta: float) -> void:
 		settings_button.hide()
 		mic_warning.hide()
 
+	if current_view is TitleMenu:
+		settings_button.hide()
+		mic_warning.hide()
+
 func replace_view(view: Control) -> void:
 	if current_view != null:
 		view_host.remove_child(current_view)
@@ -63,6 +86,16 @@ func replace_view(view: Control) -> void:
 	view.process_mode = Node.PROCESS_MODE_PAUSABLE
 	view.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	view_host.add_child(view)
+
+func show_title_menu() -> void:
+	Sfx.stop_all()
+	var menu := TitleMenu.new()
+	menu.new_game.connect(show_bedroom)
+	menu.settings_requested.connect(toggle_settings)
+	menu.quit_requested.connect(func() -> void: get_tree().quit())
+	replace_view(menu)
+	settings_button.hide()
+	mic_warning.hide()
 
 func show_warning() -> void:
 	var screen := Control.new()
@@ -103,7 +136,7 @@ func show_flower_night() -> void:
 func show_last_scream() -> void:
 	if not current_view is RunView: show_run()
 	var finale: LastScream = current_view.start_last_scream()
-	if not finale.finished.is_connected(show_calibration): finale.finished.connect(show_calibration)
+	if not finale.finished.is_connected(show_title_menu): finale.finished.connect(show_title_menu)
 
 func show_ending() -> void:
 	var ending := EndingView.new()
@@ -117,7 +150,7 @@ func show_end_screen() -> void:
 	UIFactory.texture(screen, "run_bg_far_cute", Rect2(0, 0, 1920, 1080))
 	UIFactory.texture(screen, "ui_panel_wide", Rect2(360, 290, 1200, 570))
 	UIFactory.label(screen, "end_title", Rect2(420, 335, 1080, 200), GameState.balance.ui.title_size)
-	UIFactory.button(screen, "restart", Rect2(640, 641, 640, 80), show_calibration)
+	UIFactory.button(screen, "restart", Rect2(640, 641, 640, 80), show_title_menu)
 
 func toggle_settings() -> void:
 	if settings_panel.visible:

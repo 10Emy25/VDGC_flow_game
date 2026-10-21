@@ -31,7 +31,7 @@ func _process(_delta: float) -> void:
 		where = "   |   %s  %.0f m  gap %.1f m  eye %s" % [run.state.section, run.model.x, run.state.director.gap, run.state.director.phase]
 		if god:
 			run.state.director.invulnerable_left = maxf(run.state.director.invulnerable_left, 0.5)
-	var cinematic: bool = main.current_view is LastScream and main.current_view.phase in ["shock", "reveal"]
+	var cinematic: bool = main.current_view is TitleMenu or main.current_view is LastScream and main.current_view.phase in ["shock", "reveal"]
 	if run != null and run.night_continuation != null:
 		cinematic = run.night_continuation.phase in ["blackout", "look", "listen"] or run.night_continuation.elapsed >= 73
 	if run != null and run.locker_pass != null and run.locker_pass.active: cinematic = true

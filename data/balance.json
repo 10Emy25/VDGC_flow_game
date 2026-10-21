@@ -123,15 +123,16 @@
   "strong_scare_limit": 4,
   "scare_min_gap_s": 45,
   "art_frames": {
-    "mina_idle": 2,
-    "mina_walk": 6,
-    "mina_jog": 6,
-    "mina_run": 6,
+    "mina_idle": 1,
+    "mina_walk": 8,
+    "mina_jog": 8,
+    "mina_run": 8,
     "mina_crouch": 1,
-    "mina_caught": 4,
+    "mina_caught": 1,
     "m1_wall": 4
   },
   "voice": {
+    "quiet_obstacle_attenuation_db": 6.0,
     "attack_s": 0.05,
     "release_s": 0.15,
     "min_rms": 1e-06,
@@ -155,7 +156,8 @@
     "sensitivity_db": 0,
     "show_voice_meter": true,
     "reduce_distortion": false,
-    "reduce_scares": false
+    "reduce_scares": false,
+    "font_scale": 1.0
   },
   "sensitivity": {
     "min_db": -10,
@@ -192,8 +194,8 @@
     "bridge_bars": 1,
     "walk_max": 2.2,
     "jog_max": 5,
-    "animation_base_fps": 3,
-    "animation_speed_fps": 1.5,
+    "animation_base_fps": 11,
+    "animation_speed_fps": 0,
     "decor_seed": 1852,
     "decor_spacing_m": 2.7,
     "bloom_life_s": 7,
@@ -234,7 +236,8 @@
     "pills_db": -14,
     "swallow_db": -16,
     "phone_db": -24,
-    "dream_intro_db": -15
+    "dream_intro_db": -15,
+    "bedroom_db": -20
   },
   "layout": {
     "screen": [
@@ -243,8 +246,8 @@
     ],
     "feet_y": 860,
     "mina_rect": [
-      300,
-      360
+      240,
+      288
     ],
     "tray_rect": [
       410,
@@ -289,10 +292,10 @@
       78
     ],
     "settings_rect": [
-      1480,
-      30,
-      392,
-      66
+      1650,
+      24,
+      222,
+      92
     ],
     "settings_panel": [
       475,
@@ -400,8 +403,8 @@
       ]
     },
     "monster_rect": [
-      900,
-      1080
+      1140,
+      1370
     ],
     "eye_rect": [
       510,
@@ -432,7 +435,8 @@
     },
     "decor_spacing_m": 4.5,
     "m1_fps": 8,
-    "cover_glow": 0.45
+    "cover_glow": 0.45,
+    "monster_feet_y": 1000
   },
   "simulation": {
     "max_step_s": 0.02
@@ -477,7 +481,117 @@
     },
     "world_lerp": 1.2,
     "dark_flash_s": 0.06,
-    "s1_decor_end_m": 420
+    "s1_decor_end_m": 420,
+    "bloom_cues": [
+      {
+        "time": 0.04,
+        "pitch": 1.0
+      },
+      {
+        "time": 0.85,
+        "pitch": 1.0
+      },
+      {
+        "time": 1.55,
+        "pitch": 1.498307
+      },
+      {
+        "time": 2.83,
+        "pitch": 1.681793
+      },
+      {
+        "time": 3.39,
+        "pitch": 1.681793
+      },
+      {
+        "time": 4.13,
+        "pitch": 1.498307
+      },
+      {
+        "time": 4.9,
+        "pitch": 1.498307
+      },
+      {
+        "time": 5.86,
+        "pitch": 1.33484
+      },
+      {
+        "time": 6.46,
+        "pitch": 1.33484
+      },
+      {
+        "time": 7.23,
+        "pitch": 1.259921
+      },
+      {
+        "time": 7.98,
+        "pitch": 1.259921
+      },
+      {
+        "time": 9.08,
+        "pitch": 1.122462
+      },
+      {
+        "time": 9.82,
+        "pitch": 1.122462
+      },
+      {
+        "time": 10.62,
+        "pitch": 1.122462
+      },
+      {
+        "time": 12.87,
+        "pitch": 1.0
+      },
+      {
+        "time": 13.53,
+        "pitch": 1.0
+      },
+      {
+        "time": 14.38,
+        "pitch": 1.498307
+      },
+      {
+        "time": 16.14,
+        "pitch": 1.259921
+      },
+      {
+        "time": 16.86,
+        "pitch": 1.259921
+      },
+      {
+        "time": 17.78,
+        "pitch": 1.122462
+      },
+      {
+        "time": 20.11,
+        "pitch": 1.0
+      },
+      {
+        "time": 20.86,
+        "pitch": 1.498307
+      },
+      {
+        "time": 21.81,
+        "pitch": 1.498307
+      },
+      {
+        "time": 23.86,
+        "pitch": 1.189207
+      },
+      {
+        "time": 24.93,
+        "pitch": 1.189207
+      },
+      {
+        "time": 25.81,
+        "pitch": 1.122462
+      },
+      {
+        "time": 26.61,
+        "pitch": 1.122462
+      }
+    ]
   },
   "horror": {
     "darkness": 0.85,

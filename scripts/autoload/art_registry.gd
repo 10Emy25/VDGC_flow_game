@@ -5,10 +5,21 @@ var cache: Dictionary = {}
 var warned: Dictionary = {}
 
 func has_texture(key: String) -> bool:
+	if MinaAnimation.supports(key):
+		return ResourceLoader.exists("res://art/mina_animation/run_1.png" if key.trim_suffix("_cute").trim_suffix("_real") in ["mina_walk","mina_jog","mina_run"] else "res://art/mina_animation/idle.png")
 	return ResourceLoader.exists("res://art/%s.png" % key) or ResourceLoader.exists("res://art/%s.svg" % key)
 
 func get_texture(key: String) -> Texture2D:
 	if cache.has(key):
+		return cache[key]
+	if MinaAnimation.supports(key):
+		cache[key] = MinaAnimation.frames(key)[0]
+		return cache[key]
+	if key == "m1_wall":
+		cache[key] = MonsterAnimation.frames()[0]
+		return cache[key]
+	if key == "m1_face_peek":
+		cache[key] = MonsterAnimation.face()
 		return cache[key]
 	for extension in ["png", "svg"]:
 		var path := "res://art/%s.%s" % [key, extension]
@@ -29,6 +40,8 @@ func get_texture(key: String) -> Texture2D:
 	return cache[key]
 
 func frames(key: String, base_key: String = "") -> Array[Texture2D]:
+	if MinaAnimation.supports(key): return MinaAnimation.frames(key)
+	if key == "m1_wall" or base_key == "m1_wall": return MonsterAnimation.frames()
 	var source := get_texture(key)
 	var lookup := base_key if not base_key.is_empty() else key.trim_suffix("_cute").trim_suffix("_real")
 	var frame_config: Dictionary

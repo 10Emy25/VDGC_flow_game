@@ -61,6 +61,7 @@ func _ready() -> void:
 	audio = GameState.balance.audio
 	steps = GameState.read_json("res://data/intro.json").steps
 	Sfx.stop_all()
+	Sfx.loop("mus_bedroom", true, audio.bedroom_db)
 	Sfx.loop("amb_night", true, audio.night_db)
 	Sfx.loop("amb_clock", true, audio.intro_clock_db)
 	var screen := Vector2(GameState.balance.layout.screen[0], GameState.balance.layout.screen[1])
@@ -412,7 +413,7 @@ func start_sleep() -> void:
 	glow.hide()
 	set_pose("bed_mina_drowsy")
 	sleep_zoom_from = stage.scale.x
-	for key in ["amb_night", "amb_clock", "mus_heart"]:
+	for key in ["amb_night", "amb_clock", "mus_heart", "mus_bedroom"]:
 		Sfx.set_loop_volume(key, audio.mic_mute_db, cfg.sleep.fade_sound_s)
 
 func update_sleep(delta: float) -> void:
@@ -428,7 +429,7 @@ func update_sleep(delta: float) -> void:
 	if music_age < 0.0 and sleep_age >= closing:
 		# Eyes closed: the room goes quiet and the music box begins in the dark.
 		music_age = 0.0
-		for key in ["amb_night", "amb_clock", "mus_heart"]:
+		for key in ["amb_night", "amb_clock", "mus_heart", "mus_bedroom"]:
 			Sfx.loop(key, false)
 		Sfx.play("mus_dream_intro", audio.dream_intro_db)
 		return

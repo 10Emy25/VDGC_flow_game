@@ -2,6 +2,7 @@ class_name DreamMessageEnding
 extends Control
 signal finished
 var phase := "wake"
+var wake_music: AudioStreamPlayer
 var age := 0.0
 var choice := ""
 var sent_reply := false
@@ -44,6 +45,11 @@ func _ready() -> void:
 	white.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(white)
 	Sfx.stop_all()
+	wake_music = AudioStreamPlayer.new()
+	wake_music.stream = Sfx.get_stream("mus_title")
+	wake_music.volume_db = -23
+	add_child(wake_music)
+	if not Sfx.silent(): wake_music.play()
 	Sfx.play("sfx_mina_exhale", -17)
 
 func build_phone() -> void:
@@ -102,8 +108,13 @@ func enter(next: String) -> void:
 			sticker.morph = 0
 			sticker.scale = Vector2.ONE * 0.72
 			Sfx.play("sfx_phone", -19)
-		"zoom": Sfx.loop("mus_flower_nightmare", true, -32)
-		"ghost": Sfx.play("sfx_capture", -13)
+		"zoom":
+			# Warm waking music gives way to the existing flower-sticker nightmare.
+			create_tween().tween_property(wake_music, "volume_db", -80.0, 1.5)
+			Sfx.loop("mus_flower_nightmare", true, -32)
+		"ghost":
+			wake_music.stop()
+			Sfx.play("sfx_capture", -13)
 		"black":
 			sticker.hide()
 			dim.color.a = 1
@@ -163,4 +174,5 @@ func _process(delta: float) -> void:
 func restart() -> void:
 	if phase != "done": return
 	Sfx.stop_all()
+	wake_music.stop()
 	finished.emit()

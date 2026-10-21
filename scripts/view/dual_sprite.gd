@@ -4,6 +4,7 @@ extends Control
 
 @export var base_key := "":
 	set(value):
+		if base_key == value: return
 		base_key = value
 		if is_inside_tree():
 			refresh()
@@ -59,6 +60,12 @@ func make_slot(texture_value: Texture2D, derive_real: bool, derive_cute: bool) -
 	slot.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	slot.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	slot.texture = texture_value
+	if base_key in ["cover_desk", "cover_locker"]:
+		# Ignore transparent export margins and keep these replacement props grounded.
+		var prop_frame := AtlasTexture.new()
+		prop_frame.atlas = texture_value.atlas if texture_value is AtlasTexture else texture_value
+		prop_frame.region = Rect2(50, 62, 1100, 1218) if base_key == "cover_desk" else Rect2(110, 20, 735, 1577)
+		slot.texture = prop_frame
 	slot.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var shader_material := ShaderMaterial.new()
 	shader_material.shader = load("res://shaders/dual_derive.gdshader")
@@ -69,15 +76,28 @@ func make_slot(texture_value: Texture2D, derive_real: bool, derive_cute: bool) -
 	shader_material.set_shader_parameter("hatch_texture", registry.get_texture("tex_hatch"))
 	slot.material = shader_material
 	add_child(slot)
+	if base_key in ["cover_desk", "cover_locker", "m1_wall"]:
+		align_cover_art(slot)
+		resized.connect(func() -> void: align_cover_art(slot))
 	return slot
+
+func align_cover_art(slot: TextureRect) -> void:
+	var image_size := slot.texture.get_size()
+	var height := minf(size.y, size.x * image_size.y / image_size.x)
+	slot.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	# Ground the visible monster silhouette, compensating its common transparent canvas margin.
+	var bottom_pad := height * MonsterAnimation.BOTTOM_PADDING / image_size.y if base_key == "m1_wall" else 0.0
+	slot.offset_top = -height + bottom_pad
+	slot.offset_bottom = bottom_pad
 
 func _process(delta: float) -> void:
 	if cute == null or not is_instance_valid(cute):
 		return
 	animation_time += delta
 	var frame := int(animation_time * animation_fps)
-	cute.texture = cute_frames[frame % cute_frames.size()]
-	real.texture = real_frames[frame % real_frames.size()]
+	if base_key not in ["cover_desk", "cover_locker"]:
+		cute.texture = cute_frames[frame % cute_frames.size()]
+		real.texture = real_frames[frame % real_frames.size()]
 	update_blend()
 
 func update_blend() -> void:
