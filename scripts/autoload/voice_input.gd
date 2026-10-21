@@ -12,6 +12,8 @@ var level01 := 0.0
 var tier := "QUIET"
 var missing_microphone := false
 var silence_s := 0.0
+var gameplay_context: WeakRef
+var quiet_attenuation_db := 0.0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -57,7 +59,8 @@ func _process(delta: float) -> void:
 		silence_s = 0.0
 	missing_microphone = silence_s >= GameState.balance.voice.missing_s
 	model.sensitivity_db = GameState.settings.sensitivity_db
-	db = model.keyboard_db(Input.is_physical_key_pressed(KEY_SPACE), Input.is_physical_key_pressed(KEY_CTRL), Input.is_physical_key_pressed(KEY_SHIFT)) if GameState.settings.keyboard_mode else mic_db
+	db = model.keyboard_db(Input.is_physical_key_pressed(KEY_SPACE), Input.is_physical_key_pressed(KEY_CTRL), Input.is_physical_key_pressed(KEY_SHIFT)) if GameState.settings.keyboard_mode else gameplay_mic_db(mic_db)
+	if GameState.settings.keyboard_mode: quiet_attenuation_db = 0.0
 	var state := model.sample(db)
 	speed_target = state.speed_target
 	is_audible = state.is_audible
@@ -73,3 +76,14 @@ func set_calibration(floor_value: float, talk_value: float, shout_value: float, 
 		config.set_value("voice", "talk_db", talk_value)
 		config.set_value("voice", "cal_shout_db", shout_value)
 		config.save("user://voice_calibration.cfg")
+
+func set_gameplay_context(context: Node) -> void:
+	gameplay_context = weakref(context)
+
+func gameplay_mic_db(raw_db: float) -> float:
+	quiet_attenuation_db = 0.0
+	if not GameState.settings.keyboard_mode and gameplay_context != null:
+		var context = gameplay_context.get_ref()
+		if is_instance_valid(context) and context.is_inside_tree() and not get_tree().paused:
+			quiet_attenuation_db = context.quiet_input_assist_db()
+	return raw_db - quiet_attenuation_db

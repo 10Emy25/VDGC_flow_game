@@ -52,7 +52,8 @@ func _ready() -> void:
 	trigger.area_entered.connect(on_arrival)
 	monster = UIFactory.texture(run, "m1_wall", Rect2(-900, 140, 650, 750))
 	monster.texture = ArtRegistry.frames("m1_wall", "m1_wall")[0]
-	monster.size = Vector2(650, 750)
+	monster.size = Vector2(850, 850.0 * MonsterAnimation.SOURCE_REGION.size.y / MonsterAnimation.SOURCE_REGION.size.x)
+	monster.position.y = GameState.balance.level_view.monster_feet_y - monster.size.y + MonsterAnimation.BOTTOM_PADDING * monster.size.y / MonsterAnimation.SOURCE_REGION.size.y
 	monster.z_index = 7
 	monster.hide()
 	black = ColorRect.new()
@@ -83,8 +84,7 @@ func on_arrival(area: Area2D) -> void:
 	run.hud_layer.hide()
 	locker.z_index = 6
 	run.position = Vector2.ZERO
-	PostFX.stress = 0
-	for node in [run.wall, run.peek, run.eye, run.crack, run.beam, run.hand, run.shade, run.edge_shade, run.darkness, run.slam_face, run.slam_text]: node.hide()
+	for node in [run.wall, run.peek, run.eye, run.crack, run.beam, run.hand, run.shade, run.edge_shade, run.slam_face, run.slam_text]: node.hide()
 	Sfx.set_loop_volume("mus_song", -25, 2)
 
 func update_follow_scene() -> void:
@@ -100,6 +100,8 @@ func render_camera() -> void:
 	var left: float = camera_m * GameState.balance.px_per_m - GameState.balance.player_screen_x
 	for item in run.world_props: item.sprite.position.x = item.x * GameState.balance.px_per_m - left - item.sprite.size.x * 0.5
 	run.mina.position.x = run.model.x * GameState.balance.px_per_m - left - run.mina.size.x * 0.5
+	# Keep the existing occluded view through the film, following Mina as the camera stops.
+	(run.darkness.material as ShaderMaterial).set_shader_parameter("center", Vector2(run.mina.position.x + run.mina.size.x * 0.5, GameState.balance.layout.feet_y - 180))
 	update_follow_scene()
 
 func step(delta: float) -> void:
@@ -123,7 +125,8 @@ func step(delta: float) -> void:
 			monster.show()
 			Sfx.play_at("sfx_m1_roar", -8, 0.9, -1)
 	elif phase == "pass":
-		monster.position.x = lerpf(-750, 2200, minf(age / 3.6, 1))
+		monster.texture = MonsterAnimation.at_time(age, GameState.balance.level_view.m1_fps)
+		monster.position.x = lerpf(-950, 2200, minf(age / 3.6, 1))
 		if age >= 4.2:
 			monster.hide()
 			phase = "emerge"
@@ -142,7 +145,7 @@ func step(delta: float) -> void:
 			phase = "black"
 			age = 0
 			black.show()
-			Sfx.play("sfx_face_slam", -10)
+			Sfx.play("sfx_title_laugh", -10)
 	elif phase == "black":
 		camera_m = lerpf(camera_m, run.model.x, minf(1, delta * 10))
 		if age >= 0.65:

@@ -8,7 +8,7 @@ func _ready() -> void:
 	run.set_process(false)
 	var layer: Control = run.layers[0].sprite
 	var film: LockerPass = run.locker_pass
-	assert(run.state.song_end == SongModel.new(GameState.song).duration)
+	assert(is_equal_approx(run.state.song_end, Sfx.get_stream("mus_song").get_length()))
 	assert(run.level.events == GameState.level.events)
 	assert(film.locker_x == 803)
 	# The original song ending shifts later encounters. The observer must follow the live event.

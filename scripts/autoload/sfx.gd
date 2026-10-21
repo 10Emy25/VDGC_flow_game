@@ -1,5 +1,8 @@
 extends Node
 
+const MONSTER_ROARS := ["sfx_monster_roar_1", "sfx_monster_roar_2", "sfx_monster_roar_3"]
+var monster_roar_index := 0
+var active_monster_roar: AudioStreamPlayer2D
 var streams: Dictionary = {}
 var loops: Dictionary = {}
 var fades: Dictionary = {}
@@ -39,8 +42,26 @@ func silent() -> bool:
 func play(key: String, volume_db: float = -10.0, pitch: float = 1.0) -> void:
 	play_at(key, volume_db, pitch, 0.0)
 
+func next_monster_roar() -> AudioStream:
+	var key: String = MONSTER_ROARS[monster_roar_index]
+	monster_roar_index = (monster_roar_index + 1) % MONSTER_ROARS.size()
+	return get_stream(key)
+
+func stop_monster_roar() -> void:
+	if is_instance_valid(active_monster_roar):
+		active_monster_roar.stop()
+		if not active_monster_roar.is_queued_for_deletion(): active_monster_roar.queue_free()
+	active_monster_roar = null
+
 func play_at(key: String, volume_db: float, pitch: float, pan: float) -> void:
-	var stream := get_stream(key)
+	var stream: AudioStream
+	if key == "sfx_m1_roar":
+		stop_monster_roar()
+		stream = next_monster_roar()
+	else:
+		# A new direction warning must not compete with an older roar on the other side.
+		if key == "sfx_m1_growl": stop_monster_roar()
+		stream = get_stream(key)
 	if stream == null:
 		return
 	if silent():
@@ -55,6 +76,7 @@ func play_at(key: String, volume_db: float, pitch: float, pan: float) -> void:
 	player.attenuation = 0.0
 	add_child(player)
 	player.finished.connect(player.queue_free)
+	if key == "sfx_m1_roar": active_monster_roar = player
 	player.play()
 
 func loop(key: String, enabled: bool, volume_db: float = -10.0) -> void:
@@ -89,6 +111,7 @@ func set_loop_volume(key: String, db: float, fade_s: float) -> void:
 	tween.tween_property(loops[key], "volume_db", db, fade_s)
 
 func stop_all() -> void:
+	stop_monster_roar()
 	for tween in fades.values():
 		if tween.is_valid():
 			tween.kill()

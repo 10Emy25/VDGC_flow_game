@@ -1,0 +1,5 @@
+# v34: recorded song bloom sync and restored face scare
+
+Flower requests are now queued by audible input and released at measured attack cues from the current 32.397-second recording. The flower animation and chime start together. Cue time uses the music playback clock, compensated for output latency, independently of the older lyric model's 19.2-second loop. Silence produces no flowers, each cue fires once, and missed cues after a stall/seek are skipped. There are no extra chimes in the recording's ending tail. The original first bell is retained as a short 0.12-second sparkle; delayed arpeggio/long tail removed, and playback pitch follows the local recorded note.
+
+The initial nightmare transition again begins with the full-screen face scare (0.7s face plus 0.3s fade), using the title child laughter. After it clears, the v32 camera film runs unchanged: left pan 0.45s, hold monster 1.1s, return 0.55s. Chase positions and hazard clock pause for the full 3.1s; monster writhing continues. v33 ground alignment and scare sound replacement remain intact.

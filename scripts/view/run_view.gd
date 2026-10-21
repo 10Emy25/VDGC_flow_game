@@ -64,6 +64,14 @@ var last_view_x := 0.0
 var slam_face: TextureRect
 var slam_text: Label
 var slam_age := INF
+const REVEAL_FACE_S := 1.0
+var bloom_cursor := 0
+var bloom_pending := false
+var bloom_last_time := -1.0
+var reveal_age := -1.0
+var reveal_camera_px := 0.0
+var reveal_clock_hold := 0.0
+var beam_cone: Polygon2D
 var darkness: ColorRect
 var lunge_left := 0.0
 var hint_left := 0.0
@@ -87,6 +95,10 @@ func _ready() -> void:
 	level = state.level
 	tutorial = TutorialModel.new(GameState.balance.tutorial)
 	song = SongModel.new(GameState.song)
+	# The supplied opening recording plays to its real end before the chase starts.
+	var opening_track: AudioStream = Sfx.get_stream("mus_song")
+	if opening_track != null:
+		state.song_end = opening_track.get_length()
 	bridge_event = level.first("bridge")
 	for error in level.validation_errors(GameState.balance):
 		push_warning(error)
@@ -96,15 +108,13 @@ func _ready() -> void:
 	else:
 		Sfx.stop_all()
 		start_song()
-	for layer_index in range(3):
-		var key: String = GameState.balance.parallax.keys[layer_index]
-		var factor: float = GameState.balance.parallax.factors[layer_index]
-		for index in range(3):
-			var sprite := dual(key, Rect2(0, 0, 1920, 1080))
-			layers.append({"sprite": sprite, "factor": factor, "tile": index - 1, "width": 1920.0})
-	for index in range(6):
-		var sprite := dual("run_ground", Rect2(0, GameState.balance.layout.feet_y, 512, 220))
-		layers.append({"sprite": sprite, "factor": 1.0, "tile": index - 1, "width": 512.0})
+	# One complete collage panel per tile; do not overlay the old forest/ground artwork.
+	for index in range(3):
+		var backdrop := SceneBackdrop.new()
+		backdrop.size = Vector2(1920, 1080)
+		backdrop.mirrored = index % 2 == 0
+		add_child(backdrop)
+		layers.append({"sprite": backdrop, "factor": 0.2, "tile": index - 1, "width": 1920.0})
 	make_decoration()
 	bridge_gap = ColorRect.new()
 	bridge_gap.color = Color(GameState.balance.palette.quiet)
@@ -142,7 +152,7 @@ func _ready() -> void:
 			sprite = dual(key, Rect2(0, GameState.balance.layout.feet_y - (0 if kind == "gate" else dims[1]), dims[0], dims[1]))
 		sprite.z_index = 3 if kind == "cover" else 1
 		objects.append({"sprite": sprite, "event": event, "kind": kind})
-	wall = dual("m1_wall", Rect2(0, GameState.balance.layout.feet_y - 1080, 900, 1080), true)
+	wall = dual("m1_wall", Rect2(0, GameState.balance.level_view.monster_feet_y - GameState.balance.level_view.monster_rect[1], GameState.balance.level_view.monster_rect[0], GameState.balance.level_view.monster_rect[1]), true)
 	wall.animation_fps = GameState.balance.level_view.m1_fps
 	wall.z_index = 2
 	peek = dual("m1_face_peek", Rect2(-500, 270, 500, 500), true)
@@ -151,6 +161,9 @@ func _ready() -> void:
 	shade = make_shade(Rect2(0, 0, 1920, 1080 * GameState.balance.m2.shadow_fraction), Color.BLACK)
 	crack = UIFactory.texture(self, "m2_sky_crack", UIFactory.rect(GameState.balance.level_view.crack_rect))
 	eye = UIFactory.texture(self, "m2_eye_open", UIFactory.rect(GameState.balance.level_view.eye_rect))
+	eye.texture = EyeAnimation.at_openness(0.0)
+	EyeAnimation.blink_frames()
+	EyeAnimation.scan_frames()
 	var beam_size: Array = GameState.balance.level_view.beam_rect
 	beam = UIFactory.texture(self, "m2_beam", Rect2(0, GameState.balance.layout.feet_y - beam_size[1], beam_size[0], beam_size[1]))
 	var additive := CanvasItemMaterial.new()
@@ -230,9 +243,13 @@ func _ready() -> void:
 	locker_pass = LockerPass.new()
 	locker_pass.run = self
 	add_child(locker_pass)
+	VoiceInput.set_gameplay_context(self)
 
 func start_song() -> void:
 	Sfx.loop("mus_song", true, GameState.balance.audio.song_db)
+	# This opening is a single full recording; never restart its first note at the ending cue.
+	var opening_track: AudioStream = Sfx.get_stream("mus_song")
+	if opening_track is AudioStreamWAV: opening_track.loop_mode = AudioStreamWAV.LOOP_DISABLED
 	Sfx.loop("mus_pad", true, GameState.balance.audio.pad_db)
 	BeatClock.reset("mus_song")
 
@@ -319,6 +336,9 @@ func _process(delta: float) -> void:
 		return
 	if finished:
 		return
+	if reveal_age >= 0.0:
+		step_nightmare_reveal(delta)
+		return
 	if dream_left > 0.0:
 		dream_left -= delta
 		if dream_left <= 0.0:
@@ -331,7 +351,7 @@ func _process(delta: float) -> void:
 	if state.section == "S1":
 		tutorial.step(delta, tier_index)
 	model.guard_enabled = not GameState.settings.keyboard_mode
-	state.step(delta, VoiceInput.speed_target, VoiceInput.is_shouting, VoiceInput.is_audible, tier_index, BeatClock.elapsed)
+	state.step(delta, VoiceInput.speed_target, VoiceInput.is_shouting, VoiceInput.is_audible, tier_index, BeatClock.elapsed - reveal_clock_hold)
 	for message in state.messages:
 		handle_message(message)
 	if state.section == "S1":
@@ -377,6 +397,8 @@ func handle_message(message: Dictionary) -> void:
 				Sfx.loop("mus_song", true, audio.song_db)
 		"face_slam":
 			slam_age = 0.0
+			reveal_age = 0.0
+			model.speed = 0.0
 			for prop in world_props:
 				if prop.get("section", "S1") == "S1":
 					if prop.x > model.x + 2.0: prop.life = 0.0
@@ -388,7 +410,7 @@ func handle_message(message: Dictionary) -> void:
 			if Sfx.loops.has("mus_song"):
 				Sfx.loop("mus_song", false)
 				BeatClock.adopt_master("mus_pad")
-			Sfx.play("sfx_face_slam", audio.slam_db + (audio.reduce_scare_db if GameState.settings.reduce_scares else 0.0))
+			Sfx.play("sfx_title_laugh", audio.slam_db + (audio.reduce_scare_db if GameState.settings.reduce_scares else 0.0))
 			GameState.world_real = 1.0
 			if not GameState.settings.reduce_scares:
 				shake_left = GameState.balance.slam.shake_s
@@ -485,6 +507,10 @@ func update_horror(delta: float) -> void:
 	mat.set_shader_parameter("soft", h.light_soft_px)
 	mat.set_shader_parameter("strength", h.darkness * real * (0.5 if not state.safe_id.is_empty() else 1.0))
 	mat.set_shader_parameter("flicker", near)
+	if reveal_age >= 0.0:
+		var amount := clampf(-reveal_camera_px / maxf(-reveal_pan_distance(), 1.0), 0.0, 1.0)
+		mat.set_shader_parameter("center", Vector2(lerpf(b.player_screen_x - reveal_camera_px, wall.position.x + wall.size.x * 0.5, amount), b.layout.feet_y - 330))
+		mat.set_shader_parameter("radius", lerpf(h.light_radius_px, 570.0, amount))
 	# Lunge: the wall lurches forward and the screen jolts.
 	lunge_left = maxf(0.0, lunge_left - delta)
 	if lunge_left > 0.0:
@@ -517,6 +543,11 @@ func update_view(delta: float) -> void:
 	var b: Dictionary = GameState.balance
 	var d := state.director
 	var in_song := state.section == "S1"
+	# Keep the bright collage throughout the song, even during the old lyric-color flashes.
+	# The monster reveal is the only transition to the red nightmare panel.
+	for layer in layers:
+		if layer.sprite is SceneBackdrop:
+			layer.sprite.set_horror(state.slammed or not in_song)
 	lyrics_back.visible = in_song
 	lyrics.visible = in_song
 	next_line.visible = in_song
@@ -564,8 +595,8 @@ func update_view(delta: float) -> void:
 	last_view_x = model.x
 	for layer in layers:
 		var camera_distance: float = model.x if layer.factor == 1.0 else parallax_x
-		layer.sprite.position.x = layer.tile * layer.width - fposmod(camera_distance * b.px_per_m * layer.factor, layer.width)
-	var camera_x: float = model.x * b.px_per_m - b.player_screen_x
+		layer.sprite.position.x = layer.tile * layer.width - fposmod((camera_distance * b.px_per_m + reveal_camera_px) * layer.factor, layer.width)
+	var camera_x: float = model.x * b.px_per_m - b.player_screen_x + reveal_camera_px
 	for prop in world_props:
 		prop.sprite.position.x = prop.x * b.px_per_m - camera_x - prop.sprite.size.x * 0.5
 		prop.sprite.visible = prop.sprite.position.x > -prop.sprite.size.x and prop.sprite.position.x < b.layout.screen[0]
@@ -588,9 +619,11 @@ func update_view(delta: float) -> void:
 		mina.base_key = key
 	mina.z_index = 0 if state.hidden else 4
 	mina.position.y = b.layout.feet_y - b.layout.mina_rect[1] - (sin(PI * model.jump_progress) * b.speed_gate.jump_height_px if model.gate_state == "jumping" else 0.0)
-	mina.animation_fps = b.s1.animation_base_fps + model.speed * b.s1.animation_speed_fps
+	mina.animation_fps = 11.0
+	if reveal_age >= 0.0: mina.base_key = "mina_idle"
+	mina.position.x = b.player_screen_x - mina.size.x * 0.5 - reveal_camera_px
 	wall.visible = d.active and state.status != "complete"
-	wall.position.x = b.player_screen_x - d.gap * b.px_per_m - wall.size.x
+	wall.position.x = b.player_screen_x - d.gap * b.px_per_m - wall.size.x - reveal_camera_px
 	var presence: float = clampf((b.level_view.peek_end_gap - d.gap) / (b.level_view.peek_end_gap - b.level_view.peek_begin_gap), 0.0, 1.0)
 	peek.visible = d.active and d.gap >= b.level_view.peek_begin_gap and d.gap <= b.level_view.peek_end_gap
 	peek.position.x = -peek.size.x + presence * b.level_view.peek_max_px
@@ -599,21 +632,25 @@ func update_view(delta: float) -> void:
 	shade.visible = crack.visible
 	shade.color.a = 0.4
 	eye.visible = d.phase in ["WARNING", "GAZE", "RECEDE"]
+	eye.scale = Vector2.ONE
+	eye.pivot_offset = eye.size * 0.5
 	if state.section == "S5":
 		var eye_age: float = state.time - state.finale_start
+		var closing := clampf(eye_age / b.finale.eye_close_s, 0.0, 1.0)
 		eye.visible = eye_age < b.finale.eye_close_s
-		eye.modulate.a = 1.0 - clampf(eye_age / b.finale.eye_close_s, 0.0, 1.0)
-		eye.texture = ArtRegistry.get_texture("m2_eye_closed" if eye_age > b.finale.eye_close_s * 0.5 else "m2_eye_open")
-		eye.pivot_offset = eye.size * 0.5
-		eye.scale.y = lerpf(1.0, 0.08, clampf(eye_age / b.finale.eye_close_s, 0.0, 1.0))
+		eye.modulate.a = 1.0 - closing
+		eye.texture = EyeAnimation.at_openness(1.0 - closing)
 	else:
 		eye.modulate.a = 1.0
-		eye.pivot_offset = eye.size * 0.5
-		var opening: float = clampf((state.clock - d.phase_start) / (d.phase_end - d.phase_start), 0.0, 1.0) if d.phase == "WARNING" else 1.0
-		eye.scale.y = lerpf(0.06, 1.0, opening * opening)
-		eye.texture = ArtRegistry.get_texture("m2_eye_closed" if d.phase == "RECEDE" or opening < 0.35 else "m2_eye_open")
-	beam.visible = d.phase == "GAZE"
-	beam.position.x = b.player_screen_x + d.beam_offset * b.px_per_m - beam.size.x * 0.5
+		var phase_progress := clampf((state.clock - d.phase_start) / maxf(d.phase_end - d.phase_start, 0.001), 0.0, 1.0)
+		var openness := 1.0
+		if d.phase == "WARNING": openness = phase_progress
+		elif d.phase == "RECEDE": openness = 1.0 - phase_progress
+		if d.phase == "GAZE":
+			eye.texture = EyeAnimation.gaze_at(state.clock - d.phase_start)
+		else:
+			eye.texture = EyeAnimation.at_openness(openness)
+	update_eye_beam()
 	hand.visible = d.slam_left > 0.0
 	hand.position.x = b.player_screen_x - b.m2.slam_offset_m * b.px_per_m - hand.size.x * 0.5
 	hand.position.y = lerpf(-hand.size.y, b.layout.feet_y - hand.size.y, clampf((b.m2.slam_s - d.slam_left) / (b.m2.slam_s * 0.2), 0.0, 1.0))
@@ -681,17 +718,9 @@ func update_song() -> void:
 		GameState.world_real = 1.0 if flash_left > 0.0 else target_real
 	if VoiceInput.is_audible and not sung.has(current) and not song.syllables[current].cut:
 		sung[current] = true
-		var flower := dual("flower_bud", Rect2(0, GameState.balance.layout.feet_y - 140, 110, 140))
-		world_props.append({"sprite": flower, "x": model.x, "life": GameState.balance.s1.bloom_life_s})
-		flower.pivot_offset = Vector2(flower.size.x * 0.5, flower.size.y)
-		flower.scale = Vector2.ONE * 0.15
-		var bloom := create_tween()
-		bloom.tween_property(flower, "scale", Vector2.ONE, GameState.song.unit_s)
-		bloom.tween_callback(func() -> void:
-			if is_instance_valid(flower):
-				flower.base_key = "flower_open")
-		Sfx.play("sfx_bloom", GameState.balance.audio.bloom_db)
-		move_child(mina, get_child_count() - 1)
+	# The recording is the master. Voice requests are quantized to its authored attacks,
+	# rather than emitted on an arbitrary microphone frame or the old 19.2s lyric loop.
+	step_song_blooms(maxf(0.0, BeatClock.elapsed - AudioServer.get_output_latency()), VoiceInput.is_audible)
 	for index in syllable_labels:
 		var ink := Color(GameState.balance.palette.ink)
 		if song.syllables[index].part != "twinkle":
@@ -699,3 +728,85 @@ func update_song() -> void:
 		var color := Color(GameState.balance.palette.gold) if sung.has(index) else ink
 		syllable_labels[index].add_theme_color_override("font_color", color)
 		syllable_labels[index].modulate.a = 1.0 if current == index or sung.has(index) else 0.5
+
+func quiet_input_assist_db() -> float:
+	# Only soften incidental room noise during the eye's quiet warning/gaze.
+	# Chases, jumping, wall breaking and the final scream always keep normal sensitivity.
+	if finished or dream_left > 0.0 or state.status != "running" or final_confrontation != null or night_continuation != null:
+		return 0.0
+	if locker_pass != null and locker_pass.active: return 0.0
+	if state.director.phase in ["WARNING", "GAZE"]:
+		return float(GameState.balance.voice.quiet_obstacle_attenuation_db)
+	return 0.0
+
+# All projection uses the same temporary camera offset; no scene/map switch.
+func reveal_pan_distance() -> float:
+	return GameState.balance.player_screen_x - state.director.gap * GameState.balance.px_per_m - wall.size.x * 0.5 - 960.0
+
+func step_nightmare_reveal(delta: float) -> void:
+	reveal_age += delta
+	reveal_clock_hold += delta
+	var target := reveal_pan_distance()
+	var pan_age := reveal_age - REVEAL_FACE_S
+	if pan_age < 0.0:
+		reveal_camera_px = 0.0
+	else:
+		# The face fills the screen first; only then reveal the creature on the map.
+		slam_age = INF
+		slam_face.hide()
+		slam_text.hide()
+		if pan_age < 0.45:
+			reveal_camera_px = lerpf(0.0, target, smoothstep(0.0, 0.45, pan_age))
+		elif pan_age < 1.55:
+			reveal_camera_px = target
+		else:
+			reveal_camera_px = lerpf(target, 0.0, smoothstep(1.55, 2.10, pan_age))
+	if pan_age + 0.000001 >= 2.10:
+		reveal_age = -1.0
+		reveal_camera_px = 0.0
+	update_view(delta)
+
+func update_eye_beam() -> void:
+	var d := state.director
+	var elapsed := state.clock - d.phase_start
+	beam.visible = d.phase == "GAZE" and EyeAnimation.beam_active(elapsed)
+	if not beam.visible: return
+	# Drawing and sight detection use exactly the same authored scan sample.
+	d.beam_offset = EyeAnimation.scan_direction(elapsed) * GameState.balance.m2.beam_half_range_m
+	beam.position.x = GameState.balance.player_screen_x + d.beam_offset * GameState.balance.px_per_m - beam.size.x * 0.5
+	var pupil := eye.position + EyeAnimation.pupil_at(elapsed) / Vector2(EyeAnimation.SOURCE_REGION.size) * eye.size
+	var origin := pupil - beam.position
+	if beam_cone == null:
+		beam.texture = null
+		beam_cone = Polygon2D.new()
+		beam_cone.use_parent_material = true
+		beam.add_child(beam_cone)
+		beam_cone.vertex_colors = PackedColorArray([Color(0.83,0.87,0.68,0.06),Color(0.83,0.87,0.68,0.06),Color(0.83,0.87,0.68,0.42),Color(0.83,0.87,0.68,0.42)])
+	beam_cone.polygon = PackedVector2Array([origin+Vector2(-14,0),origin+Vector2(14,0),Vector2(beam.size.x,beam.size.y),Vector2(0,beam.size.y)])
+
+func step_song_blooms(audio_time: float, audible: bool) -> void:
+	var cues: Array = GameState.balance.song_view.bloom_cues
+	if audio_time < bloom_last_time - 0.1:
+		bloom_cursor = 0
+		bloom_pending = false
+	bloom_last_time = audio_time
+	bloom_pending = bloom_pending or audible
+	while bloom_cursor < cues.size() and float(cues[bloom_cursor].time) <= audio_time + 0.000001:
+		var cue: Dictionary = cues[bloom_cursor]
+		# Skip stale attacks after a stall/seek, instead of bursting several sounds at once.
+		if bloom_pending and audio_time - float(cue.time) <= 0.1:
+			spawn_song_flower(float(cue.pitch))
+		bloom_pending = false
+		bloom_cursor += 1
+
+func spawn_song_flower(pitch: float) -> void:
+	var flower := dual("flower_bud", Rect2(0, GameState.balance.layout.feet_y - 140, 110, 140))
+	world_props.append({"sprite": flower, "x": model.x, "life": GameState.balance.s1.bloom_life_s})
+	flower.pivot_offset = Vector2(flower.size.x * 0.5, flower.size.y)
+	flower.scale = Vector2.ONE * 0.15
+	var bloom := create_tween()
+	bloom.tween_property(flower, "scale", Vector2.ONE, 0.14)
+	bloom.tween_callback(func() -> void:
+		if is_instance_valid(flower): flower.base_key = "flower_open")
+	Sfx.play("sfx_bloom", GameState.balance.audio.bloom_db, pitch)
+	move_child(mina, get_child_count() - 1)

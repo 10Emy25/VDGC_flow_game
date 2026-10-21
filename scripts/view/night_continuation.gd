@@ -67,7 +67,6 @@ func _ready() -> void:
 	status.text = ""
 	scare_face = UIFactory.texture(self, "m1_face_peek", Rect2(0, 0, 780, 900))
 	scare_face.hide()
-	Sfx.play("sfx_face_slam", -15 if GameState.settings.reduce_scares else -8)
 	direction_hint = UIFactory.label(self, "", Rect2(230, 270, 1460, 60), 29, Color("e6d8bd"))
 	direction_hint.text = ""
 	closing_left = closing_voice(-0.95)
@@ -218,8 +217,7 @@ func trigger_scare() -> void:
 	scare_face.scale = Vector2.ONE * 0.85
 	scare_face.modulate.a = 0.45 if GameState.settings.reduce_scares else 1
 	scare_face.show()
-	Sfx.play_at("sfx_m1_roar", -15 if GameState.settings.reduce_scares else -6, 1.2, monster_side)
-	Sfx.play("sfx_face_slam", -20 if GameState.settings.reduce_scares else -10, 1.1)
+	Sfx.play_at("sfx_title_laugh", -19 if GameState.settings.reduce_scares else -7, 1.0, monster_side)
 
 func update_scare(delta: float) -> void:
 	if not scare_active: return
