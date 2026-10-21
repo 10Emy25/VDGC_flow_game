@@ -38,7 +38,7 @@ func _ready() -> void:
 	check(run.mina.z_index < 3 and run.beam.visible, "Hidden Mina behind cover while beam remains visible")
 	key(KEY_SHIFT, true)
 	advance(.26)
-	check(run.state.director.hearing_count == 1 and run.hand.visible, "Actual keyboard hum gives warning slam")
+	check(run.state.director.hearing_count == 1 and run.state.director.slam_left > 0.0, "Actual keyboard hum gives warning slam")
 	key(KEY_SHIFT, false)
 	advance(1.02)
 	key(KEY_SHIFT, true)

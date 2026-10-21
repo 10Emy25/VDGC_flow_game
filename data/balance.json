@@ -32,7 +32,8 @@
     "width_m": 2,
     "jump_s": 0.6,
     "climb_s": 0.6,
-    "jump_height_px": 160,
+    "jump_height_px": 290,
+    "climb_height_px": 320,
     "assist_speed": 4.5
   },
   "m1": {
@@ -85,6 +86,7 @@
     "invuln_s": 3,
     "no_scare_s": 10,
     "capture_anim_s": 1.2,
+    "sky_capture_anim_s": 2.2,
     "fade_s": 0.5,
     "min_capture_gap_s": 3
   },
@@ -436,7 +438,15 @@
     "decor_spacing_m": 4.5,
     "m1_fps": 8,
     "cover_glow": 0.45,
-    "monster_feet_y": 1000
+    "monster_feet_y": 1000,
+    "mud_pit": {
+      "above_feet_px": 70
+    },
+    "flesh_pillar": {
+      "height_px": 140,
+      "bury_px": 8,
+      "center_m": 1.2
+    }
   },
   "simulation": {
     "max_step_s": 0.02

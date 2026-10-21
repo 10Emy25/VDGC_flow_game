@@ -73,7 +73,7 @@ func step_once(delta: float, target: float, shouting: bool, audible: bool, tier:
 	if status != "running":
 		status_age += delta
 		director.time += delta
-		if status == "captured" and status_age >= balance.respawn.capture_anim_s:
+		if status == "captured" and status_age >= capture_anim_length():
 			status = "fading"
 			status_age = 0.0
 		elif status == "fading" and status_age >= balance.respawn.fade_s and not hold_respawn:
@@ -349,3 +349,9 @@ func finish_run() -> void:
 	run.x = level.first("door").x
 	status_age = 0.0
 	messages.append({"type": "flash"})
+
+# 被天上的大眼睛抓住时要播完伸手抓人的动画，比普通被抓长一些
+func capture_anim_length() -> float:
+	if director.capture_cause in ["hearing", "sight"]:
+		return balance.respawn.get("sky_capture_anim_s", balance.respawn.capture_anim_s)
+	return balance.respawn.capture_anim_s

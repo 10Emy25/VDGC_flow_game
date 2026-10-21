@@ -84,7 +84,7 @@ func on_arrival(area: Area2D) -> void:
 	run.hud_layer.hide()
 	locker.z_index = 6
 	run.position = Vector2.ZERO
-	for node in [run.wall, run.peek, run.eye, run.crack, run.beam, run.hand, run.shade, run.edge_shade, run.slam_face, run.slam_text]: node.hide()
+	for node in [run.wall, run.peek, run.eye, run.crack, run.beam, run.sky_hand, run.shade, run.edge_shade, run.slam_face, run.slam_text]: node.hide()
 	Sfx.set_loop_volume("mus_song", -25, 2)
 
 func update_follow_scene() -> void:

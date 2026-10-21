@@ -58,7 +58,12 @@ var peek: DualSprite
 var eye: TextureRect
 var crack: TextureRect
 var beam: TextureRect
-var hand: TextureRect
+# 天空怪物抓人时伸下来的手（见 sky_hand_animation.gd）
+const NightmareLayer := preload("res://scripts/view/nightmare_layer.gd")
+const SkyHand := preload("res://scripts/view/sky_hand_animation.gd")
+var sky_hand: TextureRect
+var sky_grab := false
+var sky_impact_done := false
 var shade: ColorRect
 var edge_shade: ColorRect
 var beat_ring: TextureRect
@@ -127,6 +132,12 @@ func _ready() -> void:
 		backdrop.mirrored = index % 2 == 0
 		add_child(backdrop)
 		layers.append({"sprite": backdrop, "factor": 0.2, "tile": index - 1, "width": 1920.0})
+	# 噩梦场景：7 层视差背景，从后到前叠放，每层 3 个图块循环
+	for layer_config in NightmareLayer.LAYERS:
+		for index in range(3):
+			var part := NightmareLayer.make(layer_config)
+			add_child(part)
+			layers.append({"sprite": part, "factor": layer_config.factor, "tile": index - 1, "width": NightmareLayer.TILE_WIDTH})
 	make_decoration()
 	bridge_gap = ColorRect.new()
 	bridge_gap.color = Color(GameState.balance.palette.quiet)
@@ -146,10 +157,39 @@ func _ready() -> void:
 			walls[event.x] = face_wall
 			continue
 		if kind == "plank":
-			var plank_dims: Array = GameState.balance.level_view.object_slots.plank
-			var plank := dual("plank", Rect2(0, GameState.balance.layout.feet_y - 20, event.length_m * GameState.balance.px_per_m, plank_dims[1]))  # 贴图长度 = 减速带的实际长度
-			plank.z_index = 1
-			objects.append({"sprite": plank, "event": event, "kind": kind})
+			# 泥潭：宽度 = 减速区的实际长度，按原图比例算高度；画在 Mina 前面，走进去时腿陷在泥里
+			var mud_cfg: Dictionary = GameState.balance.level_view.mud_pit
+			var mud := TextureRect.new()
+			mud.texture = load("res://art/obstacles/mud_pit.png")
+			mud.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			mud.stretch_mode = TextureRect.STRETCH_SCALE
+			mud.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var mud_width: float = event.length_m * GameState.balance.px_per_m
+			mud.size = Vector2(mud_width, mud_width * mud.texture.get_height() / mud.texture.get_width())
+			mud.position.y = GameState.balance.layout.feet_y - mud_cfg.above_feet_px
+			mud.z_index = 5
+			add_child(mud)
+			objects.append({"sprite": mud, "event": event, "kind": kind})
+			continue
+		if kind == "gate":
+			# 尖叫跳跃的肉柱：整块宽度 = 跳跃区 width_m，柱子立在区内 pillar_center_m 处
+			var pillar_cfg: Dictionary = GameState.balance.level_view.flesh_pillar
+			var zone := Control.new()
+			zone.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			zone.size = Vector2(GameState.balance.speed_gate.width_m * GameState.balance.px_per_m, pillar_cfg.height_px)
+			zone.position.y = GameState.balance.layout.feet_y + pillar_cfg.bury_px - pillar_cfg.height_px
+			var pillar := TextureRect.new()
+			pillar.texture = load("res://art/obstacles/flesh_pillar.png")
+			pillar.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+			pillar.stretch_mode = TextureRect.STRETCH_SCALE
+			pillar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var pillar_width: float = pillar_cfg.height_px * pillar.texture.get_width() / pillar.texture.get_height()
+			pillar.size = Vector2(pillar_width, pillar_cfg.height_px)
+			pillar.position.x = pillar_cfg.center_m * GameState.balance.px_per_m - pillar_width * 0.5
+			zone.add_child(pillar)
+			zone.z_index = 1
+			add_child(zone)
+			objects.append({"sprite": zone, "event": event, "kind": kind})
 			continue
 		if kind not in ["cover", "checkpoint", "gate", "door"]:
 			continue
@@ -199,9 +239,15 @@ func _ready() -> void:
 	var additive := CanvasItemMaterial.new()
 	additive.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
 	beam.material = additive
-	var hand_size: Array = GameState.balance.level_view.hand_rect
-	hand = UIFactory.texture(self, "m2_hand", Rect2(0, -40, hand_size[0], hand_size[1]))
 	mina = dual("mina_idle", Rect2(GameState.balance.player_screen_x - GameState.balance.layout.mina_rect[0] * 0.5, GameState.balance.layout.feet_y - GameState.balance.layout.mina_rect[1], GameState.balance.layout.mina_rect[0], GameState.balance.layout.mina_rect[1]))
+	sky_hand = TextureRect.new()
+	sky_hand.texture = SkyHand.frames()[0]
+	sky_hand.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	sky_hand.size = sky_hand.texture.get_size()
+	sky_hand.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sky_hand.z_index = 5  # 盖在 Mina（4）上面
+	sky_hand.visible = false
+	add_child(sky_hand)
 	beat_ring = UIFactory.texture(self, "ui_beat_ring", Rect2(GameState.balance.player_screen_x - 250, GameState.balance.layout.feet_y - 430, 500, 500))
 	beat_ring.pivot_offset = beat_ring.size * 0.5
 	hud_layer = CanvasLayer.new()
@@ -644,8 +690,11 @@ func handle_message(message: Dictionary) -> void:
 			clear_left = GameState.balance.bar_s
 		"all_clear": clear_left = GameState.balance.bar_s
 		"capture":
-			Sfx.play("sfx_m2_grab" if state.director.capture_cause == "hearing" else "sfx_capture", audio.capture_db)
 			state.hold_respawn = true
+			# 被天上的大眼睛看见或听见时，由天空伸下来的手抓走（音效和手的动作对齐）
+			sky_grab = state.director.capture_cause in ["hearing", "sight"]
+			Sfx.play("sfx_sky_hand" if sky_grab else "sfx_capture", audio.capture_db)
+			sky_impact_done = false
 			death_video_pending = true
 		"beat_call":
 			Sfx.play("sfx_beat_call", audio.beat_db)
@@ -740,7 +789,7 @@ func update_view(delta: float) -> void:
 	# Keep the bright collage throughout the song, even during the old lyric-color flashes.
 	# The monster reveal is the only transition to the red nightmare panel.
 	for layer in layers:
-		if layer.sprite is SceneBackdrop:
+		if layer.sprite.has_method("set_horror"):
 			layer.sprite.set_horror(state.slammed or not in_song)
 	lyrics_back.visible = in_song
 	lyrics.visible = in_song
@@ -813,7 +862,7 @@ func update_view(delta: float) -> void:
 	if mina.base_key != key:
 		mina.base_key = key
 	mina.z_index = 0 if state.hidden else 4
-	mina.position.y = b.layout.feet_y - b.layout.mina_rect[1] - (sin(PI * model.jump_progress) * b.speed_gate.jump_height_px if model.gate_state == "jumping" else 0.0)
+	mina.position.y = b.layout.feet_y - b.layout.mina_rect[1] - gate_lift_px()
 	mina.animation_fps = 11.0
 	if reveal_age >= 0.0: mina.base_key = "mina_idle"
 	mina.position.x = b.player_screen_x - mina.size.x * 0.5 - reveal_camera_px
@@ -848,9 +897,7 @@ func update_view(delta: float) -> void:
 		else:
 			eye.texture = EyeAnimation.at_openness(openness)
 	update_eye_beam()
-	hand.visible = d.slam_left > 0.0
-	hand.position.x = b.player_screen_x - b.m2.slam_offset_m * b.px_per_m - hand.size.x * 0.5
-	hand.position.y = lerpf(-hand.size.y, b.layout.feet_y - hand.size.y, clampf((b.m2.slam_s - d.slam_left) / (b.m2.slam_s * 0.2), 0.0, 1.0))
+	update_sky_grab()
 	shake_left = maxf(0.0, shake_left - delta)
 	position = Vector2.ZERO
 	if shake_left > 0.0 and not GameState.settings.reduce_scares:
@@ -1017,3 +1064,30 @@ func spawn_song_flower(pitch: float) -> void:
 		if is_instance_valid(flower): flower.base_key = "flower_open")
 	Sfx.play("sfx_bloom", GameState.balance.audio.bloom_db, pitch)
 	move_child(mina, get_child_count() - 1)
+
+func update_sky_grab() -> void:
+	if not sky_grab or state.status not in ["captured", "fading"]:
+		sky_hand.visible = false
+		if state.status == "running": sky_grab = false
+		return
+	var age: float = state.status_age + (state.capture_anim_length() if state.status == "fading" else 0.0)
+	var pose: Dictionary = SkyHand.pose(age)
+	var grab := Vector2(mina.position.x + mina.size.x * 0.5, mina.position.y + mina.size.y * SkyHand.GRAB_HEIGHT)
+	sky_hand.visible = true
+	sky_hand.texture = SkyHand.frames()[pose["frame"]]
+	sky_hand.position = grab + pose["offset"] - SkyHand.PIVOT
+	mina.position += pose["carry"]
+	# 手攥住的那一下轻微震屏
+	if age >= SkyHand.DESCEND_S and not sky_impact_done:
+		sky_impact_done = true
+		shake_left = maxf(shake_left, 0.4)
+
+# Mina 越过肉柱时离地的高度。跳跃按时间画弧线；跑太慢被绊住后爬过去时，按走过的距离画弧线，保证柱子上方总能过去。
+func gate_lift_px() -> float:
+	var b: Dictionary = GameState.balance
+	if model.gate_state == "jumping":
+		return sin(PI * model.jump_progress) * b.speed_gate.jump_height_px
+	if model.gate_state == "climbing":
+		var progress := clampf((model.x - model.gate_x) / b.speed_gate.width_m, 0.0, 1.0)
+		return sin(PI * progress) * b.speed_gate.climb_height_px
+	return 0.0

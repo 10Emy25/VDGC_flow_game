@@ -2,14 +2,12 @@ class_name SceneBackdrop
 extends Control
 # Native atlas regions crop the supplied sheet without regenerating or altering its pixels.
 var day: TextureRect
-var night: TextureRect
 var horror := false
 var mirrored := false
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	day = make_slot(preload("res://art/scene_day.tres"))
-	night = make_slot(preload("res://art/scene_night.tres"))
 	set_horror(horror)
 
 func make_slot(texture_value: Texture2D) -> TextureRect:
@@ -26,5 +24,5 @@ func make_slot(texture_value: Texture2D) -> TextureRect:
 
 func set_horror(value: bool) -> void:
 	horror = value
+	# 噩梦部分改由 art/nightmare/ 的分层视差背景显示（NightmareLayer）
 	if day != null: day.visible = not value
-	if night != null: night.visible = value
