@@ -21,6 +21,10 @@ var pose_front: TextureRect
 var pose_key := ""
 var pose_tween: Tween
 var pose_rect: Rect2
+var cg_back: TextureRect
+var cg_front: TextureRect
+var cg_key := ""
+var cg_tween: Tween
 var props: Dictionary = {}
 var glow: TextureRect
 var inserts: Dictionary = {}
@@ -77,6 +81,8 @@ func _ready() -> void:
 	pose_front.texture = null
 	glow = make_glow()
 	stage.add_child(glow)
+	cg_back = make_cg_layer(screen)
+	cg_front = make_cg_layer(screen)
 	build_inserts(screen)
 	veil = ColorRect.new()
 	veil.size = screen
@@ -194,6 +200,8 @@ func next_step() -> void:
 	skip = false
 	if step.has("pose"):
 		set_pose(step.pose)
+	if step.has("cg"):
+		set_cg(step.cg)
 	for key in step.get("hide", []):
 		if props.has(key): props[key].hide()
 	for key in step.get("show", []):
@@ -278,6 +286,36 @@ func set_pose(key: String) -> void:
 	pose_tween.tween_property(pose_front, "modulate:a", 1.0, fade)
 	pose_tween.parallel().tween_property(pose_back, "modulate:a", 0.0, fade * 0.6).set_delay(fade * 0.5)
 
+func make_cg_layer(screen: Vector2) -> TextureRect:
+	var node := TextureRect.new()
+	node.position = Vector2(-12, -12)
+	node.size = screen + Vector2(24, 24)
+	node.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	node.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	node.modulate.a = 0.0
+	stage.add_child(node)
+	return node
+
+func set_cg(key: String) -> void:
+	if key == cg_key:
+		return
+	cg_key = key
+	if cg_tween != null and cg_tween.is_valid():
+		cg_tween.kill()
+	var fade: float = cfg.get("cg_fade_s", 0.8)
+	cg_back.texture = cg_front.texture
+	cg_back.modulate.a = cg_front.modulate.a
+	cg_front.modulate.a = 0.0
+	cg_tween = create_tween()
+	if key.is_empty():
+		cg_front.texture = null
+		cg_tween.tween_property(cg_back, "modulate:a", 0.0, fade)
+	else:
+		cg_front.texture = ArtRegistry.get_texture(key)
+		cg_tween.tween_property(cg_front, "modulate:a", 1.0, fade)
+		cg_tween.tween_callback(func(): cg_back.modulate.a = 0.0)
+
 func shake(t: float, seed_value: float, amount: float) -> Vector2:
 	var hz: float = cfg.tremble_hz
 	return Vector2(sin(t * hz * 6.1 + seed_value) + sin(t * hz * 3.7 + seed_value * 2.0), cos(t * hz * 5.3 + seed_value) + sin(t * hz * 2.3 + seed_value * 3.0)) * 0.5 * amount
@@ -289,6 +327,9 @@ func update_pose_motion() -> void:
 	for node in [pose_back, pose_front]:
 		node.scale = Vector2(1.0, breath)
 		node.position = pose_rect.position + offset
+	var cg_shake := shake(age, 0.0, 4.0) if trembling else Vector2.ZERO
+	for node in [cg_back, cg_front]:
+		node.position = Vector2(-12, -12) + cg_shake
 
 func set_insert(insert: String) -> void:
 	if insert == insert_name:
