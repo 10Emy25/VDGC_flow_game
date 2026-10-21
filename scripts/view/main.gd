@@ -125,7 +125,7 @@ func show_run(from_dream: bool = false, music_elapsed: float = 0.0) -> void:
 	var run := RunView.new()
 	if from_dream:
 		run.dream_left = maxf(0.01, GameState.balance.intro.music_bars * GameState.balance.bar_s - music_elapsed)
-	run.run_finished.connect(show_ending)
+	run.run_finished.connect(show_title_menu)  # 旧的诊所结局已去掉，直接回标题
 	run.flower_triggered.connect(show_last_scream)
 	replace_view(run)
 

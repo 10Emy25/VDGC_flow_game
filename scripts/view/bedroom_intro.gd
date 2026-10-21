@@ -63,7 +63,7 @@ func _ready() -> void:
 	Sfx.stop_all()
 	Sfx.loop("mus_bedroom", true, audio.bedroom_db)
 	Sfx.loop("amb_night", true, audio.night_db)
-	Sfx.loop("amb_clock", true, audio.intro_clock_db)
+	# 去掉了一直“哔哔哔”的钟声（amb_clock），只留卧室音乐和夜晚环境音
 	var screen := Vector2(GameState.balance.layout.screen[0], GameState.balance.layout.screen[1])
 	stage = Control.new()
 	stage.size = screen
@@ -99,6 +99,7 @@ func _ready() -> void:
 	add_child(hud_layer)
 	caption = UIFactory.label(hud_layer, "intro_caption", Rect2(60, 44, 600, 54), GameState.balance.ui.small_size, Color(GameState.balance.palette.cool))
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	caption.visible = false  # 不显示左上角的 S0 / THE BEDROOM
 	var box := UIFactory.rect(cfg.narration_rect)
 	narration_box = UIFactory.texture(hud_layer, "ui_narration", box)
 	narration = UIFactory.label(hud_layer, "empty_lyrics", box.grow_individual(-60, -16, -90, -16), GameState.balance.ui.therapist_size, Color("#e8eef2"))
@@ -305,6 +306,8 @@ func set_cg(key: String) -> void:
 	if cg_tween != null and cg_tween.is_valid():
 		cg_tween.kill()
 	var fade: float = cfg.get("cg_fade_s", 0.8)
+	if cg_front.texture == null:
+		fade = 0.0
 	cg_back.texture = cg_front.texture
 	cg_back.modulate.a = cg_front.modulate.a
 	cg_front.modulate.a = 0.0

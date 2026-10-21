@@ -41,6 +41,14 @@ var input_hint: Label
 var caption: Label
 var progress_label: Label
 var subtitle: Label
+# 屏幕下方唯一的一行字（对白和提示共用）
+var bottom_text: Label
+var bottom_paper: Polygon2D
+var bottom_fade: TextureRect
+var horror_font: Font
+var cute_font: Font
+var bottom_mode := -1
+const CRAYONS := [Color("#e8577a"), Color("#f29c38"), Color("#4fa3d9"), Color("#6cbf5a"), Color("#a77bd6")]
 var subtitle_back: TextureRect
 var subtitle_left := 0.0
 var hud_layer: CanvasLayer
@@ -71,6 +79,10 @@ var bloom_last_time := -1.0
 var reveal_age := -1.0
 var reveal_camera_px := 0.0
 var reveal_clock_hold := 0.0
+const DEATH_VIDEOS := ["res://video/death_1.ogv", "res://video/death_2.ogv"]
+var death_count := 0
+var last_death_video := -1
+var death_video_pending := false
 var beam_cone: Polygon2D
 var darkness: ColorRect
 var lunge_left := 0.0
@@ -135,7 +147,7 @@ func _ready() -> void:
 			continue
 		if kind == "plank":
 			var plank_dims: Array = GameState.balance.level_view.object_slots.plank
-			var plank := dual("plank", Rect2(0, GameState.balance.layout.feet_y - 20, event.length_m * GameState.balance.px_per_m + plank_dims[0], plank_dims[1]))
+			var plank := dual("plank", Rect2(0, GameState.balance.layout.feet_y - 20, event.length_m * GameState.balance.px_per_m, plank_dims[1]))  # 贴图长度 = 减速带的实际长度
 			plank.z_index = 1
 			objects.append({"sprite": plank, "event": event, "kind": kind})
 			continue
@@ -146,8 +158,11 @@ func _ready() -> void:
 		var dims: Array = slots[slot_key]
 		var key: String = event.get("art", {"checkpoint":"safe_puddle", "gate":"gap_crack", "door":"light_door"}.get(kind, ""))
 		var sprite: Control
-		if kind in ["door", "checkpoint"]:
-			sprite = UIFactory.texture(self, key, Rect2(0, GameState.balance.layout.feet_y - dims[1] * (0.5 if kind == "checkpoint" else 1.0), dims[0], dims[1]))
+		if kind == "checkpoint":
+			# 隐藏检查点：不画水洼，只在地上留一团淡淡的光
+			sprite = make_checkpoint_glow(Rect2(0, GameState.balance.layout.feet_y - dims[1] * 0.8, dims[0] * 1.2, dims[1] * 1.6))
+		elif kind == "door":
+			sprite = UIFactory.texture(self, key, Rect2(0, GameState.balance.layout.feet_y - dims[1], dims[0], dims[1]))
 		else:
 			sprite = dual(key, Rect2(0, GameState.balance.layout.feet_y - (0 if kind == "gate" else dims[1]), dims[0], dims[1]))
 		sprite.z_index = 3 if kind == "cover" else 1
@@ -158,7 +173,22 @@ func _ready() -> void:
 	peek = dual("m1_face_peek", Rect2(-500, 270, 500, 500), true)
 	peek.z_index = 2
 	edge_shade = make_shade(Rect2(0, 0, GameState.balance.level_view.peek_max_px, 1080), Color.BLACK)
-	shade = make_shade(Rect2(0, 0, 1920, 1080 * GameState.balance.m2.shadow_fraction), Color.BLACK)
+	shade = make_shade(Rect2(0, 0, 1920, 1080 * GameState.balance.m2.shadow_fraction * 1.4), Color(0, 0, 0, 0))
+	# 大眼睛出现时上方变暗：从上往下渐渐变透明，没有硬边
+	var shade_gradient := Gradient.new()
+	shade_gradient.offsets = PackedFloat32Array([0.0, 0.5, 1.0])
+	shade_gradient.colors = PackedColorArray([Color(0, 0, 0, 0.5), Color(0, 0, 0, 0.25), Color(0, 0, 0, 0.0)])
+	var shade_texture := GradientTexture2D.new()
+	shade_texture.gradient = shade_gradient
+	shade_texture.fill_from = Vector2(0.5, 0.0)
+	shade_texture.fill_to = Vector2(0.5, 1.0)
+	var shade_fade := TextureRect.new()
+	shade_fade.texture = shade_texture
+	shade_fade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	shade_fade.size = shade.size
+	shade_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shade.add_child(shade_fade)
+	shade.modulate.a = 0.0
 	crack = UIFactory.texture(self, "m2_sky_crack", UIFactory.rect(GameState.balance.level_view.crack_rect))
 	eye = UIFactory.texture(self, "m2_eye_open", UIFactory.rect(GameState.balance.level_view.eye_rect))
 	eye.texture = EyeAnimation.at_openness(0.0)
@@ -196,6 +226,7 @@ func _ready() -> void:
 	caption = UIFactory.label(hud_layer, "path_caption", Rect2(55, 40, 185, 115), GameState.balance.ui.small_size)
 	caption.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 	caption.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	caption.visible = false  # 不显示左上角的 S几 / 关卡名
 	input_hint = UIFactory.label(hud_layer, "keyboard_hint" if GameState.settings.keyboard_mode else "mic_hint", Rect2(590, 1008, 1260, 46), GameState.balance.ui.small_size)
 	progress_label = UIFactory.label(hud_layer, "empty_lyrics", UIFactory.rect(GameState.balance.level_view.progress_rect), GameState.balance.ui.small_size)
 	var subtitle_rect := UIFactory.rect(GameState.balance.level_view.subtitle_rect)
@@ -204,6 +235,8 @@ func _ready() -> void:
 	# UIFactory.subtitle supplies a backing; share that one rather than drawing twice.
 	subtitle_back.queue_free()
 	subtitle_back = hud_layer.get_child(hud_layer.get_child_count() - 2)
+	build_bottom_text()
+	style_lyrics_bar()
 	var transition_layer := CanvasLayer.new()
 	transition_layer.layer = 9
 	add_child(transition_layer)
@@ -317,6 +350,150 @@ func dual(key: String, rect_value: Rect2, real_only: bool = false) -> DualSprite
 	add_child(sprite)
 	return sprite
 
+# 检查点的光：一个椭圆形的柔光，叠加模式，越往外越透明
+func make_checkpoint_glow(rect_value: Rect2) -> TextureRect:
+	var gradient := Gradient.new()
+	gradient.offsets = PackedFloat32Array([0.0, 0.45, 1.0])
+	gradient.colors = PackedColorArray([Color(1.0, 0.9, 0.6, 1.0), Color(1.0, 0.85, 0.55, 0.4), Color(1.0, 0.8, 0.5, 0.0)])
+	var texture := GradientTexture2D.new()
+	texture.gradient = gradient
+	texture.fill = GradientTexture2D.FILL_RADIAL
+	texture.fill_from = Vector2(0.5, 0.5)
+	texture.fill_to = Vector2(1.0, 0.5)
+	var node := TextureRect.new()
+	node.texture = texture
+	node.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	node.position = rect_value.position
+	node.size = rect_value.size
+	node.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var additive := CanvasItemMaterial.new()
+	additive.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	node.material = additive
+	add_child(node)
+	return node
+
+# ---- 下方文字：突脸前是贴在纸条上的手写字，突脸后是血红色恐怖字 ----
+func build_bottom_text() -> void:
+	horror_font = load("res://fonts/creepster.ttf")
+	cute_font = load("res://fonts/gaegu_bold.ttf")
+	# 恐怖模式：字后面从上往下慢慢变暗，让红字看得清
+	var gradient := Gradient.new()
+	gradient.offsets = PackedFloat32Array([0.0, 1.0])
+	gradient.colors = PackedColorArray([Color(0, 0, 0, 0), Color(0, 0, 0, 0.65)])
+	var fade_texture := GradientTexture2D.new()
+	fade_texture.gradient = gradient
+	fade_texture.fill_from = Vector2(0.5, 0.0)
+	fade_texture.fill_to = Vector2(0.5, 1.0)
+	bottom_fade = TextureRect.new()
+	bottom_fade.texture = fade_texture
+	bottom_fade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	bottom_fade.position = Vector2(0, 790)
+	bottom_fade.size = Vector2(1920, 290)
+	bottom_fade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud_layer.add_child(bottom_fade)
+	# 可爱模式：一张撕下来的纸条，上下边缘是随机的锯齿
+	bottom_paper = Polygon2D.new()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	var points := PackedVector2Array()
+	for x in range(0, 1301, 26):
+		points.append(Vector2(x - 650, -60 + rng.randf_range(-6.0, 6.0)))
+	for x in range(1300, -1, -26):
+		points.append(Vector2(x - 650, 60 + rng.randf_range(-6.0, 6.0)))
+	bottom_paper.polygon = points
+	bottom_paper.color = Color(0.93, 0.89, 0.81, 0.96)
+	bottom_paper.position = Vector2(1240, 950)
+	bottom_paper.rotation_degrees = -1.4
+	hud_layer.add_child(bottom_paper)
+	for tape_x in [-600.0, 500.0]:
+		var tape := Polygon2D.new()
+		tape.polygon = PackedVector2Array([Vector2(0, 0), Vector2(100, 0), Vector2(100, 32), Vector2(0, 32)])
+		tape.color = Color(1, 1, 1, 0.5)
+		tape.position = Vector2(tape_x, -78.0 if tape_x < 0.0 else 46.0)
+		bottom_paper.add_child(tape)
+	bottom_text = Label.new()
+	bottom_text.position = Vector2(600, 890)  # 放在左下角音量条的右边，不重叠
+	bottom_text.size = Vector2(1280, 120)
+	bottom_text.pivot_offset = bottom_text.size * 0.5
+	bottom_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	bottom_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	bottom_text.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	hud_layer.add_child(bottom_text)
+
+# 上方跟唱歌词：把原来的横条换成一张贴着胶带的手撕纸条，字换成手写体
+func style_lyrics_bar() -> void:
+	lyrics_back.texture = null
+	var paper := Polygon2D.new()
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 11
+	var points := PackedVector2Array()
+	for x in range(0, 1361, 28):
+		points.append(Vector2(x - 680, -64 + rng.randf_range(-7.0, 7.0)))
+	for x in range(1360, -1, -28):
+		points.append(Vector2(x - 680, 64 + rng.randf_range(-7.0, 7.0)))
+	paper.polygon = points
+	paper.color = Color(0.95, 0.91, 0.83, 0.95)
+	paper.position = Vector2(700, 62)
+	paper.rotation_degrees = 0.8
+	lyrics_back.add_child(paper)
+	for tape_x in [-660.0, 540.0]:
+		var tape := Polygon2D.new()
+		tape.polygon = PackedVector2Array([Vector2(0, 0), Vector2(110, 0), Vector2(110, 34), Vector2(0, 34)])
+		tape.color = Color(1, 1, 1, 0.5)
+		tape.position = Vector2(tape_x, -82.0)
+		tape.rotation_degrees = -8.0 if tape_x < 0.0 else 7.0
+		paper.add_child(tape)
+	next_line.add_theme_font_override("font", cute_font)
+	next_line.add_theme_font_size_override("font_size", 30)
+	next_line.add_theme_color_override("font_color", Color(0.19, 0.12, 0.12, 0.55))
+
+func update_bottom_text() -> void:
+	# 原来的对白框和屏幕上方的提示都不再显示，统一放到下方这一行
+	subtitle.visible = false
+	subtitle_back.visible = false
+	prompt.visible = false
+	var text: String = subtitle.text if subtitle_left > 0.0 else prompt.text
+	var horror := 1 if state.slammed else 0
+	bottom_text.visible = not text.is_empty()
+	bottom_paper.visible = bottom_text.visible and horror == 0
+	bottom_fade.visible = bottom_text.visible and horror == 1
+	if horror == 1:
+		bottom_text.text = text.to_upper()
+	else:
+		bottom_text.text = text
+		# 纸条的长度跟着字的长度变
+		var width := cute_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 50).x
+		bottom_paper.scale.x = clampf((width + 120.0) / 1300.0, 0.35, 1.0)
+	if horror == bottom_mode:
+		return
+	bottom_mode = horror
+	if horror == 1:
+		bottom_text.rotation_degrees = 0.0
+		# 血字放在屏幕正中间，稍微抬高一点，避开左下角的音量条
+		bottom_text.position = Vector2(160, 830)
+		bottom_text.size = Vector2(1600, 110)
+		bottom_text.pivot_offset = bottom_text.size * 0.5
+		bottom_text.add_theme_font_override("font", horror_font)
+		bottom_text.add_theme_font_size_override("font_size", 68)
+		bottom_text.add_theme_color_override("font_color", Color(0.86, 0.09, 0.13))
+		bottom_text.add_theme_color_override("font_outline_color", Color(0.08, 0.0, 0.0))
+		bottom_text.add_theme_constant_override("outline_size", 10)
+		bottom_text.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.85))
+		bottom_text.add_theme_constant_override("shadow_outline_size", 22)
+		bottom_text.add_theme_constant_override("shadow_offset_x", 0)
+		bottom_text.add_theme_constant_override("shadow_offset_y", 0)
+	else:
+		bottom_text.rotation_degrees = -1.4
+		bottom_text.position = Vector2(600, 890)
+		bottom_text.size = Vector2(1280, 120)
+		bottom_text.pivot_offset = bottom_text.size * 0.5
+		bottom_text.add_theme_font_override("font", cute_font)
+		bottom_text.add_theme_font_size_override("font_size", 50)
+		bottom_text.add_theme_color_override("font_color", Color(0.19, 0.12, 0.12))
+		bottom_text.add_theme_constant_override("outline_size", 0)
+		bottom_text.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0))
+		bottom_text.add_theme_constant_override("shadow_outline_size", 0)
+
 func make_shade(rect_value: Rect2, color: Color, parent: Node = null) -> ColorRect:
 	var node := ColorRect.new()
 	node.position = rect_value.position
@@ -354,10 +531,25 @@ func _process(delta: float) -> void:
 	state.step(delta, VoiceInput.speed_target, VoiceInput.is_shouting, VoiceInput.is_audible, tier_index, BeatClock.elapsed - reveal_clock_hold)
 	for message in state.messages:
 		handle_message(message)
+	if death_video_pending and state.status == "fading" and state.status_age >= GameState.balance.respawn.fade_s:
+		play_death_video()
 	if state.section == "S1":
 		update_song()
 	update_view(delta)
 	if locker_pass != null: locker_pass.update_follow_scene()
+
+func play_death_video() -> void:
+	death_video_pending = false
+	death_count += 1
+	var pick: int
+	if last_death_video < 0:
+		pick = randi() % DEATH_VIDEOS.size()
+	else:
+		pick = (last_death_video + 1) % DEATH_VIDEOS.size()
+	last_death_video = pick
+	var video := DeathVideo.new(DEATH_VIDEOS[pick], death_count >= 3)
+	video.finished.connect(func(): state.hold_respawn = false)
+	add_child(video)
 
 func start_night_continuation() -> void:
 	flower_night_started = true
@@ -453,6 +645,8 @@ func handle_message(message: Dictionary) -> void:
 		"all_clear": clear_left = GameState.balance.bar_s
 		"capture":
 			Sfx.play("sfx_m2_grab" if state.director.capture_cause == "hearing" else "sfx_capture", audio.capture_db)
+			state.hold_respawn = true
+			death_video_pending = true
 		"beat_call":
 			Sfx.play("sfx_beat_call", audio.beat_db)
 			ring_left = GameState.balance.finale.ring_s
@@ -570,21 +764,19 @@ func update_view(delta: float) -> void:
 	elif state.on_plank and d.phase == "IDLE": prompt_key = "plank_hint"
 	elif d.slam_left > 0.0: prompt_key = "slam_hint"
 	elif clear_left > 0.0 and d.phase in ["RECEDE", "IDLE"]: prompt_key = "clear_hint"
-	elif state.hidden: prompt_key = "hidden_hint"
 	elif d.phase == "GAZE": prompt_key = "gaze_hint"
 	elif d.phase == "WARNING": prompt_key = "warning_hint"
 	elif d.phase == "TELL": prompt_key = "tell_hint"
-	elif not state.safe_id.is_empty(): prompt_key = "safe_hint"
 	elif clear_left > 0.0: prompt_key = "clear_hint"
 	if state.status == "running" and state.still_s >= b.stuck.after_s and d.phase in ["IDLE", "TELL"] and (not in_song or bridge_waiting):
 		if state.wall_waiting >= 0.0: prompt_key = "stuck_wall"
 		elif state.slip_left > 0.0 or state.on_plank: prompt_key = "stuck_plank"
 		elif bridge_waiting: prompt_key = "stuck_bridge"
 		elif not model.gate_state.is_empty(): prompt_key = "stuck_gate"
-		elif not state.safe_id.is_empty(): prompt_key = "stuck_safe"
 		else: prompt_key = "stuck_quiet"
 	prompt.text = "" if prompt_key.is_empty() else GameState.text(prompt_key)
 	prompt.visible = not prompt.text.is_empty()
+	update_bottom_text()
 	hint_left = maxf(0.0, hint_left - delta)
 	meter.pulse_tier = 3 if state.wall_waiting >= 0.0 else 2 if bridge_waiting else (0 if tutorial.complete() or not in_song else tutorial.stages[tutorial.index].tier)
 	clear_left = maxf(0.0, clear_left - delta)
@@ -605,8 +797,11 @@ func update_view(delta: float) -> void:
 			prop.sprite.queue_free()
 	world_props = world_props.filter(func(prop: Dictionary) -> bool: return prop.life > 0.0)
 	for object in objects:
-		object.sprite.position.x = object.event.x * b.px_per_m - camera_x - (0.0 if object.kind == "gate" else object.sprite.size.x * 0.5)
+		object.sprite.position.x = object.event.x * b.px_per_m - camera_x - (0.0 if object.kind in ["gate", "plank"] else object.sprite.size.x * 0.5)  # 减速带从起点开始画，和判定范围对齐
 		object.sprite.visible = object.sprite.position.x > -object.sprite.size.x and object.sprite.position.x < b.layout.screen[0]
+		if object.kind == "checkpoint":
+			# 光慢慢呼吸（一明一暗）
+			object.sprite.modulate.a = 0.8 + 0.2 * sin(Time.get_ticks_msec() / 1000.0 * 1.6)
 	bridge_gap.position.x = bridge_event.x * b.px_per_m - camera_x
 	bridge.position.x = bridge_gap.position.x
 	bridge.position.y = lerpf(1080.0, b.layout.feet_y - 100.0, bridge_progress)
@@ -627,10 +822,12 @@ func update_view(delta: float) -> void:
 	var presence: float = clampf((b.level_view.peek_end_gap - d.gap) / (b.level_view.peek_end_gap - b.level_view.peek_begin_gap), 0.0, 1.0)
 	peek.visible = d.active and d.gap >= b.level_view.peek_begin_gap and d.gap <= b.level_view.peek_end_gap
 	peek.position.x = -peek.size.x + presence * b.level_view.peek_max_px
-	edge_shade.color.a = presence * 0.4 if d.active else 0.0
-	crack.visible = d.phase in ["WARNING", "GAZE", "RECEDE"]
-	shade.visible = crack.visible
-	shade.color.a = 0.4
+	edge_shade.color.a = presence * 0.0 if d.active else 0.0
+	crack.visible = false  # 不显示眼睛后面的裂缝
+	# 变暗慢慢淡入淡出（约 1.2 秒），不再一下子出现
+	var shade_target := 1.0 if d.phase in ["WARNING", "GAZE", "RECEDE"] else 0.0
+	shade.modulate.a = move_toward(shade.modulate.a, shade_target, delta / 1.2)
+	shade.visible = shade.modulate.a > 0.001
 	eye.visible = d.phase in ["WARNING", "GAZE", "RECEDE"]
 	eye.scale = Vector2.ONE
 	eye.pivot_offset = eye.size * 0.5
@@ -693,7 +890,10 @@ func update_song() -> void:
 			if song.syllables[index].line == line_index:
 				var label := Label.new()
 				label.text = song.syllables[index].text
-				label.add_theme_font_size_override("font_size", GameState.balance.ui.lyrics_size)
+				label.add_theme_font_size_override("font_size", 56)
+				label.add_theme_font_override("font", cute_font)
+				# 每个字微微歪一点，像手写
+				label.rotation_degrees = sin(index * 12.9) * 4.0
 				var syllable_slot := MarginContainer.new()
 				syllable_slot.add_theme_constant_override("margin_right", 12 if song.syllables[index].word_end else 0)
 				lyrics.add_child(syllable_slot)
@@ -722,12 +922,19 @@ func update_song() -> void:
 	# rather than emitted on an arbitrary microphone frame or the old 19.2s lyric loop.
 	step_song_blooms(maxf(0.0, BeatClock.elapsed - AudioServer.get_output_latency()), VoiceInput.is_audible)
 	for index in syllable_labels:
-		var ink := Color(GameState.balance.palette.ink)
-		if song.syllables[index].part != "twinkle":
-			ink = Color("#7a1414")
-		var color := Color(GameState.balance.palette.gold) if sung.has(index) else ink
-		syllable_labels[index].add_theme_color_override("font_color", color)
-		syllable_labels[index].modulate.a = 1.0 if current == index or sung.has(index) else 0.5
+		var label: Label = syllable_labels[index]
+		var twinkle: bool = song.syllables[index].part == "twinkle"
+		var ink := Color(0.19, 0.12, 0.12) if twinkle else Color("#7a1414")
+		var color := ink
+		if sung.has(index):
+			# 唱过的字被涂上蜡笔颜色；后面歌词变味的部分涂成暗红
+			color = CRAYONS[index % CRAYONS.size()] if twinkle else Color("#b01c1c")
+		label.add_theme_color_override("font_color", color)
+		label.modulate.a = 1.0 if current == index or sung.has(index) else 0.45
+		# 正在唱的字放大、跳一下
+		label.pivot_offset = label.size * 0.5
+		var bump := 1.0 + 0.18 * (1.0 - fmod(BeatClock.elapsed * 2.0, 1.0)) if current == index else 1.0
+		label.scale = Vector2(bump, bump)
 
 func quiet_input_assist_db() -> float:
 	# Only soften incidental room noise during the eye's quiet warning/gaze.

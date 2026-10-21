@@ -54,9 +54,9 @@
       "key": "breathe"
     },
     {
-      "x": 360,
+      "x": 362,
       "type": "plank",
-      "length_m": 8
+      "length_m": 10
     },
     {
       "x": 390,
@@ -107,9 +107,9 @@
       "art": "cover_flower_big"
     },
     {
-      "x": 575,
+      "x": 577,
       "type": "plank",
-      "length_m": 8
+      "length_m": 10
     },
     {
       "x": 600,
@@ -149,9 +149,9 @@
       "type": "gate"
     },
     {
-      "x": 745,
+      "x": 747,
       "type": "plank",
-      "length_m": 8
+      "length_m": 10
     },
     {
       "x": 770,

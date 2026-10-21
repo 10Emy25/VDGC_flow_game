@@ -448,7 +448,8 @@
       "width_m": 1.0
     },
     "plank": {
-      "max_speed": 5.2,
+      "max_speed": 2.6,
+      "shout_speed": 0.5,
       "slip_after_s": 0.3,
       "slip_s": 1.2
     }

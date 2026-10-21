@@ -19,6 +19,7 @@ var bridge_progress := 0.0
 var bridge_ready := false
 var bridge_waiting := false
 var status_age := 0.0
+var hold_respawn := false
 var finale_hits := 0
 var finale_start := 0.0
 var last_call_bar := -1
@@ -75,7 +76,7 @@ func step_once(delta: float, target: float, shouting: bool, audible: bool, tier:
 		if status == "captured" and status_age >= balance.respawn.capture_anim_s:
 			status = "fading"
 			status_age = 0.0
-		elif status == "fading" and status_age >= balance.respawn.fade_s:
+		elif status == "fading" and status_age >= balance.respawn.fade_s and not hold_respawn:
 			respawn()
 		elif status == "flash" and status_age >= balance.finale.flash_s:
 			status = "complete"
@@ -83,7 +84,13 @@ func step_once(delta: float, target: float, shouting: bool, audible: bool, tier:
 		return
 	var old_x := run.x
 	shouting_now = shouting
+	# 减速带：一踏上去立刻生效。尖叫/狂奔会被“粘住”寸步难行；不尖叫就慢慢、稳稳地走
+	var plank_cap := plank_speed_cap(shouting)
+	if plank_cap >= 0.0:
+		target = minf(target, plank_cap)
 	run.step(delta, target, shouting)
+	if plank_cap >= 0.0:
+		run.speed = minf(run.speed, plank_cap)
 	var bridge: Dictionary = level.first("bridge")
 	bridge_waiting = not bridge_ready and run.x >= bridge.x
 	if bridge_waiting:
@@ -246,6 +253,16 @@ func step_obstacles(delta: float, old_x: float, shouting: bool) -> void:
 			messages.append({"type": "slip"})
 	else:
 		plank_over_s = 0.0
+
+# 站在减速带上时返回速度上限，不在上面返回 -1
+func plank_speed_cap(shouting: bool) -> float:
+	if not run.gate_state.is_empty():
+		return -1.0
+	var cfg: Dictionary = balance.obstacles.plank
+	for plank in level.of_type("plank"):
+		if run.x >= plank.x and run.x <= plank.x + plank.length_m:
+			return float(cfg.shout_speed) if shouting else float(cfg.max_speed)
+	return -1.0
 
 func cover_after(x: float) -> Dictionary:
 	for cover in level.of_type("cover"):

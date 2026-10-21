@@ -76,7 +76,7 @@
     "slip_hint": "TOO FAST.",
     "lunge_hint": "SHOUT!",
     "stuck_wall": "THE FACES BLOCK THE WAY. SHOUT AT THEM!",
-    "stuck_plank": "YOU SLIPPED. GO SLOWER: TALK LOUDLY, DON'T SHOUT.",
+    "stuck_plank": "SCREAMING WON'T HELP HERE. JUST TALK.",
     "stuck_bridge": "HOLD A TALKING VOICE TO RAISE THE BRIDGE.",
     "stuck_gate": "YOU FELL SHORT. SHOUT TO JUMP NEXT TIME.",
     "stuck_cover": "STAY STILL AND SILENT UNTIL THE EYE CLOSES.",
